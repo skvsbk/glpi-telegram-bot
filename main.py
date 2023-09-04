@@ -84,6 +84,7 @@ async def authorization(message: types.Message):
 
 @dp.message_handler(commands=['stop'])
 async def stop(message: types.Message):
+    await delete_inline_keyboard(bot, msgid_dict, message.chat.id)
     await bot.send_message(chat_id=message.chat.id,
                            text=Config.MSG_GOODBY)
     try:
@@ -132,7 +133,7 @@ async def get_media(message: types.Message):
                 else:
                     pass
 
-                kbd_add_send_cancel = {'btn_continue': Config.BTN_ADD,
+                kbd_add_send_cancel = {'btn_add': Config.BTN_ADD,
                                        'btn_send': Config.BTN_SEND_TICKET,
                                        'btn_cancel': Config.BTN_CANCEL}
 
@@ -145,8 +146,7 @@ async def get_media(message: types.Message):
                 msgid_dict[message.chat.id].append(get_data_msg.message_id)
 
             # Enter room or equipment
-            elif (ticket_dict[message.chat.id].name == Config.BTN_THEME_EQIPMENT
-                  or ticket_dict[message.chat.id].name == Config.BTN_THEME_ROOM):
+            elif ticket_dict[message.chat.id].name in (Config.BTN_THEME_EQIPMENT, Config.BTN_THEME_ROOM):
                 # Enter name of room or equipment, add it to tickets name
                 ticket_name = ticket_dict[message.chat.id].name + " " + message.text
                 ticket_dict[message.chat.id].name = ticket_name
@@ -154,12 +154,14 @@ async def get_media(message: types.Message):
                 ticket_dict[message.chat.id].isnew = True
 
                 # Select category
-                kbd_category = {'btn_category_1': Config.KBD_CATEGORY['btn_category_1'][0],
+                kbd_category = {'btn_categ_help': Config.KBD_CATEGORY['btn_categ_help'][0],
+                                'btn_category_1': Config.KBD_CATEGORY['btn_category_1'][0],
                                 'btn_category_2': Config.KBD_CATEGORY['btn_category_2'][0],
                                 'btn_category_3': Config.KBD_CATEGORY['btn_category_3'][0],
                                 'btn_category_4': Config.KBD_CATEGORY['btn_category_4'][0],
                                 'btn_category_5': Config.KBD_CATEGORY['btn_category_5'][0],
-                                'btn_category_6': Config.KBD_CATEGORY['btn_category_6'][0]
+                                'btn_category_6': Config.KBD_CATEGORY['btn_category_6'][0],
+                                'btn_category_7': Config.KBD_CATEGORY['btn_category_7'][0],
                                 }
                 markup = make_keyboard_inline(2, **kbd_category)
 
@@ -226,7 +228,7 @@ async def callback_inline_keyboard(call):
                                        text=Config.MSG_ENTER_NAME_ROOM)
 
 
-            elif call.data == 'btn_continue':
+            elif call.data == 'btn_add':
                 await bot.edit_message_text(chat_id=call.message.chat.id,
                                             message_id=call.message.message_id,
                                             text="Опишите проблему, сделайте фото или видео...",
@@ -256,7 +258,7 @@ async def callback_inline_keyboard(call):
                                            reply_markup=None)
                 await stop(call.message)
 
-            elif call.data == 'btn_cancel' or call.data == 'btn_theme_exit':
+            elif call.data in ('btn_cancel', 'btn_theme_exit'):
                 if ticket_dict[call.message.chat.id].name == '':
                     await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
                 else:
@@ -265,6 +267,42 @@ async def callback_inline_keyboard(call):
                                                 text=Config.MSG_CANCEL,
                                                 reply_markup=None)
                 await stop(call.message)
+
+            # Select Help
+            elif call.data == 'btn_categ_help':
+                # Delete message with inline keyboard
+                await delete_inline_keyboard(bot, msgid_dict, call.message.chat.id)
+
+                kbd_add_send_cancel = {'btn_understand': Config.BTN_UNDERSTAND}
+                markup = make_keyboard_inline(1, **kbd_add_send_cancel)
+                title_msg = await bot.send_message(chat_id=call.message.chat.id,
+                                       text=Config.MSG_HELP,
+                                       parse_mode='html',
+                                       reply_markup=markup)
+                msgid_dict[call.message.chat.id].append(title_msg.message_id)
+
+            # Select Understand
+            elif call.data == 'btn_understand':
+                # Delete message with inline keyboard
+                await delete_inline_keyboard(bot, msgid_dict, call.message.chat.id)
+
+              # Select category
+                kbd_category = {'btn_categ_help': Config.KBD_CATEGORY['btn_categ_help'][0],
+                                'btn_category_1': Config.KBD_CATEGORY['btn_category_1'][0],
+                                'btn_category_2': Config.KBD_CATEGORY['btn_category_2'][0],
+                                'btn_category_3': Config.KBD_CATEGORY['btn_category_3'][0],
+                                'btn_category_4': Config.KBD_CATEGORY['btn_category_4'][0],
+                                'btn_category_5': Config.KBD_CATEGORY['btn_category_5'][0],
+                                'btn_category_6': Config.KBD_CATEGORY['btn_category_6'][0],
+                                'btn_category_7': Config.KBD_CATEGORY['btn_category_7'][0],
+                                }
+                markup = make_keyboard_inline(2, **kbd_category)
+
+                title_msg = await bot.send_message(chat_id=call.message.chat.id,
+                                                   text=Config.MSG_SELECT_TYPE,
+                                                   reply_markup=markup)
+                msgid_dict[call.message.chat.id].append(title_msg.message_id)
+
 
             # Select category
             elif call.data.startswith('btn_category_'):

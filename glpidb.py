@@ -43,11 +43,10 @@ def get_user_credentials(mobile):
             # query = f'SELECT glpi_users.id, api_token, firstname FROM glpi_users ' \
             #         f'WHERE mobile = "{mobile}" AND is_active=1'
 
-
             """
             SELECT glpi_users.id, api_token, firstname, glpi_locations.name AS locations_name FROM glpi_users
             JOIN glpi_locations ON glpi_users.locations_id = glpi_locations.id
-            WHERE mobile = "+7 (950) 014-93-24" AND is_active=1
+            WHERE mobile = "+7 (911) 009-65-76" AND is_active=1
             """
             query = f'SELECT glpi_users.id, api_token, firstname, glpi_locations.name AS locations_name ' \
                     f'FROM glpi_users ' \

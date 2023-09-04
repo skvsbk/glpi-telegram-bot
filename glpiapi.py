@@ -72,15 +72,18 @@ class GLPI:
 
             time_to_resolve = str(datetime.datetime.today().date() + datetime.timedelta(5)) + ' 12:00:00'
 
-            msg = f'{{"input": {{"name": "{self.ticket.name}", ' \
-                  f'"content": "{self.ticket.content}", ' \
-                  f'"time_to_resolve": "{time_to_resolve}", ' \
-                  f'"itilcategories_id": {itilcategories_id}, ' \
-                  f'"type": {Config.TYPE}, ' \
-                  f'"requesttypes_id": {Config.REQUESTTYPE_ID}, ' \
-                  f'"urgency": {urgency_id}}}}}'
+            msg_dict = {"input": {"name": self.ticket.name,
+                                  "content": self.ticket.content,
+                                  "time_to_resolve": time_to_resolve,
+                                  "itilcategories_id": itilcategories_id,
+                                  "type": Config.TYPE,
+                                  "requesttypes_id": Config.REQUESTTYPE_ID,
+                                  "urgency": urgency_id}
+                        }
 
-            response = requests.post(self.url+"Ticket", headers=headers, data=msg.encode('utf-8'))
+            msg = json.dumps(msg_dict).encode('utf-8')
+
+            response = requests.post(self.url+"Ticket", headers=headers, data=msg)
             if response.status_code == 201:
                 self.ticket.id = json.loads(response.text).get('id')
 
@@ -88,12 +91,15 @@ class GLPI:
                 url = f'{self.url}Ticket/{self.ticket.id}/Ticket_User/'
 
                 # type is Requester 1, Assign 2, Observer 3
-                msg = f'{{"input": {{"tickets_id": "{self.ticket.id}", ' \
-                      f'"users_id": "{self.user.id}", ' \
-                      f'"type": "1", ' \
-                      f'"use_notification": "1"}}}}'
+                msg_dict = {"input": {"tickets_id": self.ticket.id,
+                                      "users_id": self.user.id,
+                                      "type": 1,
+                                      "use_notification": 1}
+                            }
 
-                response_assign = requests.post(url, headers=headers, data=msg.encode('utf-8'))
+                msg = json.dumps(msg_dict).encode('utf-8')
+
+                response_assign = requests.post(url, headers=headers, data=msg)
 
         return self.ticket.id
 
@@ -104,12 +110,12 @@ class GLPI:
         :return: noting
         """
         headers = {'Session-Token': self.session}
-        files = {
-            'uploadManifest': (None, '{"input": {"name": "Документ заявки '+str(self.ticket.id) +
-                               ' (tb)", "_filename": ["' + filename + '"]}}', 'application/json'),
-            'filename[0]': (filename, open(file_path+'/'+filename, "rb")),
-        }
+        files = {'uploadManifest': (None, '{"input": {"name": "Документ заявки '+str(self.ticket.id) +
+                                    ' (tb)", "_filename": ["' + filename + '"]}}', 'application/json'),
+                 'filename[0]': (filename, open(file_path+'/'+filename, "rb")), }
+
         response = requests.post(self.url+"Document", headers=headers, files=files)
+
         if response.status_code == 201:
             doc_id = response.json().get('id')
         else:

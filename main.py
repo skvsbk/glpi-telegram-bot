@@ -199,12 +199,10 @@ async def get_media(message: types.Message):
 async def callback_inline_keyboard(call):
     try:
         if call.message:
-            if call.data == 'btn_theme_equipment' or call.data == 'btn_theme_room':
+            if call.data == 'btn_theme_equipment':
                 # save choice to dict or object Ticket
-                if call.data == 'btn_theme_equipment':
-                    ticket_dict[call.message.chat.id].name = Config.BTN_THEME_EQIPMENT
-                else:
-                    ticket_dict[call.message.chat.id].name = Config.BTN_THEME_ROOM
+                ticket_dict[call.message.chat.id].name = Config.BTN_THEME_EQIPMENT
+
                 # Delete inlaine keyboard
                 await delete_inline_keyboard(bot, msgid_dict, call.message.chat.id)
 
@@ -212,7 +210,21 @@ async def callback_inline_keyboard(call):
                 await bot.send_message(chat_id=call.message.chat.id,
                                        text='Тема: ' + ticket_dict[call.message.chat.id].name)
                 await bot.send_message(chat_id=call.message.chat.id,
-                                       text=Config.MSG_ENTER_NAME)
+                                       text=Config.MSG_ENTER_NAME_EQUIPMENT)
+
+            if call.data == 'btn_theme_room':
+                # save choice to dict or object Ticket
+                ticket_dict[call.message.chat.id].name = Config.BTN_THEME_ROOM
+
+                # Delete inlaine keyboard
+                await delete_inline_keyboard(bot, msgid_dict, call.message.chat.id)
+
+                # send message
+                await bot.send_message(chat_id=call.message.chat.id,
+                                       text='Тема: ' + ticket_dict[call.message.chat.id].name)
+                await bot.send_message(chat_id=call.message.chat.id,
+                                       text=Config.MSG_ENTER_NAME_ROOM)
+
 
             elif call.data == 'btn_continue':
                 await bot.edit_message_text(chat_id=call.message.chat.id,

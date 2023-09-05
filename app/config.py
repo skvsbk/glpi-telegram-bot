@@ -3,11 +3,11 @@ from dotenv import load_dotenv
 
 
 class Config:
-    load_dotenv('.env')
+    load_dotenv('././.env')
 
     BOT_TOKEN = os.getenv('BOT_TOKEN')
     URL_GLPI = os.getenv('URL_GLPI')
-    FILE_PATH = 'images'
+    FILE_PATH = './app/images'
 
     # Database usage
     DB_HOST = os.getenv('DB_HOST')
@@ -53,22 +53,16 @@ class Config:
                "<b>АХО</b>: Мелкие хозяйственные поручения (повесить зеркало, засиликонить раковину, собрать шкаф, " +\
                "поменять доводчик)\n"
 
-        # Error messages
+    # Error messages
     MSG_AUTH_ERROR = "К сожалению, мы не смоги Вас авторизовать. Обратитесь в IT-отдел."
     MSG_KEYBOARD_ATTENTION = "Используйте, пожалуйста, кнопки."
 
-    MSG_ERROR_ATTENTION = "Что-то пошло не так. Возможно необходимо авторизоваться, нажав /start. Обратитесь в IT-отдел."
+    MSG_ERROR_ATTENTION = "Что-то пошло не так. Возможно необходимо авторизоваться, нажав /start. " + \
+                          "Обратитесь в IT-отдел."
     MSG_ERROR_SEND = "Заявка не создана. Обратитесь в ИТ-отдел."
     MSG_CANCEL = "Заявка отменена."
 
     # Keyboards
-    # KBD_CATEGORY = {"btn_category_1": ["Включение/Выключение", 8],
-    #                 "btn_category_2": ["Замена", 6],
-    #                 "btn_category_3": ["Неисправность", 7],
-    #                 "btn_category_4": ["Проверка", 4],
-    #                 "btn_category_5": ["Сборка/Разборка", 5],
-    #                 "btn_category_6": ["Долив щелочи", 9]}
-
     KBD_CATEGORY = {"btn_categ_help": ["Помощь", 0],
                     "btn_category_1": ["Замена", 6],
                     "btn_category_2": ["Вкл/Выкл", 8],

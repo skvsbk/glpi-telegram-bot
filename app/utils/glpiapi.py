@@ -1,7 +1,7 @@
 import datetime
 import requests
 import json
-from config import Config
+from app.config import Config
 
 
 class User:
@@ -80,10 +80,9 @@ class GLPI:
                                   "requesttypes_id": Config.REQUESTTYPE_ID,
                                   "urgency": urgency_id}
                         }
-
             msg = json.dumps(msg_dict).encode('utf-8')
-
             response = requests.post(self.url+"Ticket", headers=headers, data=msg)
+
             if response.status_code == 201:
                 self.ticket.id = json.loads(response.text).get('id')
 
@@ -96,10 +95,8 @@ class GLPI:
                                       "type": 1,
                                       "use_notification": 1}
                             }
-
                 msg = json.dumps(msg_dict).encode('utf-8')
-
-                response_assign = requests.post(url, headers=headers, data=msg)
+                requests.post(url, headers=headers, data=msg)
 
         return self.ticket.id
 

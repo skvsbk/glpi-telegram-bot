@@ -1,11 +1,11 @@
 import datetime
 import logging
 import pymysql
-from config import Config
+from app.config import Config
 
 
 # logging
-logging.basicConfig(level=logging.WARNING, filename='glpibot.log',
+logging.basicConfig(level=logging.WARNING, filename='../../glpibot.log',
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

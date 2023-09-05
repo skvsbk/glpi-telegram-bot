@@ -13,13 +13,11 @@ ENV PIP_DEFAULT_TIMEOUT=100
 
 RUN apt-get update
 RUN apt-get install -y python3 python3-pip build-essential python3-venv
-# python-dev
 
-RUN mkdir -p /codebase /storage
-ADD . /app
-WORKDIR /app
+RUN mkdir -p /code /storage
+ADD . /code
+WORKDIR /code
 
 RUN pip3 install -r requirements.txt
-#RUN chmod +x /codebase/main.py
 
-CMD python3 /app/main.py;
+CMD python3 /code/app/main.py;

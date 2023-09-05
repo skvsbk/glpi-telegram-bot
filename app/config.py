@@ -8,6 +8,7 @@ class Config:
     BOT_TOKEN = os.getenv('BOT_TOKEN')
     URL_GLPI = os.getenv('URL_GLPI')
     FILE_PATH = './app/images'
+    FILE_LOG = './app/bot.log'
 
     # Database usage
     DB_HOST = os.getenv('DB_HOST')

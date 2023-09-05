@@ -41,6 +41,7 @@ async def make_ticket_title(bot, msgid_dict, message, add_msg_id=True):
     if add_msg_id:
         msgid_dict[message.chat.id].append(title_msg.message_id)
 
+
 async def make_category_keyboard(bot, msgid_dict, message):
     kbd_category = {'btn_categ_help': Config.KBD_CATEGORY['btn_categ_help'][0],
                     'btn_category_1': Config.KBD_CATEGORY['btn_category_1'][0],

@@ -2,6 +2,16 @@ import datetime
 import requests
 import json
 from app.config import Config
+from app.utils.glpidb import get_equipment_id, get_location_id
+
+import logging
+
+
+# logging
+logging.basicConfig(level=logging.WARNING, filename=Config.FILE_LOG,
+                    format='%(asctime)s %(name)s %(levelname)s:%(message)s')
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class User:
@@ -38,7 +48,7 @@ class GLPI:
             "Content-Type": "application/json",
             "Authorization": "user_token " + self.user.token
         }
-        response = requests.get(self.url+"initSession", headers=headers)
+        response = requests.get(self.url+"/initSession", headers=headers)
         if response.status_code == 401 or response.status_code == 400:
             self.session = None
         else:
@@ -52,7 +62,7 @@ class GLPI:
             'Content-Type': 'application/json',
             'Session-Token': self.session,
         }
-        requests.get(self.url+"killSession", headers=headers)
+        requests.get(self.url+"/killSession", headers=headers)
 
     def create_ticket(self):
         """
@@ -80,23 +90,37 @@ class GLPI:
                                   "requesttypes_id": Config.REQUESTTYPE_ID,
                                   "urgency": urgency_id}
                         }
+
+            equipment_ids = None
+
+            if self.ticket.name.startswith(Config.BTN_THEME_ROOM):
+                location_name = self.ticket.name.split()[1]
+                location_id = get_location_id(location_name)
+                if location_id is not None:
+                    msg_dict["input"].update({"locations_id": location_id})
+            if self.ticket.name.startswith(Config.BTN_THEME_EQIPMENT):
+                equipment_name = self.ticket.name.split()[1]
+                equipment_ids = get_equipment_id(equipment_name)
+                if equipment_ids is not None and equipment_ids['locations_id']:
+                    msg_dict["input"].update({"locations_id": equipment_ids['locations_id']})
+
             msg = json.dumps(msg_dict).encode('utf-8')
-            response = requests.post(self.url+"Ticket", headers=headers, data=msg)
+            response = requests.post(self.url+"/Ticket", headers=headers, data=msg)
+            logger.info(f'{self.url}/Ticket status_code={response.status_code}')
 
             if response.status_code == 201:
                 self.ticket.id = json.loads(response.text).get('id')
 
-                # Assign user to initiator
-                url = f'{self.url}Ticket/{self.ticket.id}/Ticket_User/'
-
-                # type is Requester 1, Assign 2, Observer 3
-                msg_dict = {"input": {"tickets_id": self.ticket.id,
-                                      "users_id": self.user.id,
-                                      "type": 1,
-                                      "use_notification": 1}
-                            }
-                msg = json.dumps(msg_dict).encode('utf-8')
-                requests.post(url, headers=headers, data=msg)
+                # Assign equipment with ticket
+                if self.ticket.name.startswith(Config.BTN_THEME_EQIPMENT) and equipment_ids is not None:
+                    url = f'{self.url}/Ticket/{self.ticket.id}/Item_Ticket/'
+                    msg_dict = {"input": {"tickets_id": self.ticket.id,
+                                          "items_id": equipment_ids['id'],
+                                          "itemtype": "Peripheral"}
+                                }
+                    msg = json.dumps(msg_dict).encode('utf-8')
+                    response = requests.post(url, headers=headers, data=msg)
+                    logger.info(f'{url} status_code={response.status_code}')
 
         return self.ticket.id
 
@@ -109,9 +133,9 @@ class GLPI:
         headers = {'Session-Token': self.session}
         files = {'uploadManifest': (None, '{"input": {"name": "Документ заявки '+str(self.ticket.id) +
                                     ' (tb)", "_filename": ["' + filename + '"]}}', 'application/json'),
-                 'filename[0]': (filename, open(file_path+'/'+filename, "rb")), }
+                 'filename[0]': (filename, open(file_path + '/' + filename, "rb")), }
 
-        response = requests.post(self.url+"Document", headers=headers, files=files)
+        response = requests.post(self.url+"/Document", headers=headers, files=files)
 
         if response.status_code == 201:
             doc_id = response.json().get('id')

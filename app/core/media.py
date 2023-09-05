@@ -10,7 +10,7 @@ import logging
 
 
 # logging
-logging.basicConfig(level=logging.WARNING, filename='glpibot.log',
+logging.basicConfig(level=logging.WARNING, filename=Config.FILE_LOG,
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -36,8 +36,6 @@ async def media(message: types.Message):
                     filename = f"{message.chat.id}_{str(random.randint(0, 1000))}.jpg"
                     await photo.download(f"{Config.FILE_PATH}/{filename}")
                     ticket_dict[message.chat.id].attachment.append(filename)
-                    # print(f"{FILE_PATH}/{filename}")
-                    # print('ticket_dict', message.chat.id, filename)
                 elif message.content_type == 'video':
                     filename = f"{message.chat.id}_{str(random.randint(0, 1000))}.mp4"
                     await message.video.download(f"{Config.FILE_PATH}/{filename}")

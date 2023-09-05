@@ -9,7 +9,7 @@ import logging
 
 
 # logging
-logging.basicConfig(level=logging.WARNING, filename='glpibot.log',
+logging.basicConfig(level=logging.WARNING, filename=Config.FILE_LOG,
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -22,7 +22,7 @@ async def callback_inline_keyboard(call):
                 # save choice to dict or object Ticket
                 ticket_dict[call.message.chat.id].name = Config.BTN_THEME_EQIPMENT
 
-                # Delete inlaine keyboard
+                # Delete inline keyboard
                 await delete_inline_keyboard(bot, msgid_dict, call.message.chat.id)
 
                 # send message

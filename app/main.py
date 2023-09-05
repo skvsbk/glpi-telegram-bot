@@ -3,10 +3,11 @@ import logging
 from app import bot
 from app.core import start, authorization, stop, media
 from app.core.inline_keyboard import callback_inline_keyboard
+from config import Config
 
 
 # logging
-logging.basicConfig(level=logging.WARNING, filename='../glpibot.log',
+logging.basicConfig(level=logging.WARNING, filename=Config.FILE_LOG,
                     format='%(asctime)s %(name)s %(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

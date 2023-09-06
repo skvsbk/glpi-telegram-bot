@@ -7,11 +7,8 @@ from app.utils.glpidb import get_equipment_id, get_location_id
 import logging
 
 
-# logging
-logging.basicConfig(level=logging.WARNING, filename=Config.FILE_LOG,
-                    format='%(asctime)s %(name)s %(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel('INFO')
 
 
 class User:

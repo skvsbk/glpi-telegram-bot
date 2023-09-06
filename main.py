@@ -1,16 +1,13 @@
 from aiogram import Dispatcher, executor
-import logging
+import logging.config
 from app import bot
 from app.core import start, authorization, stop, media
 from app.core.inline_keyboard import callback_inline_keyboard
-from config import Config
+from app.config import Config
 
 
-# logging
-logging.basicConfig(level=logging.WARNING, filename=Config.FILE_LOG,
-                    format='%(asctime)s %(name)s %(levelname)s:%(message)s')
+logging.config.dictConfig(Config.LOGGING_CONFIG)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 dp = Dispatcher(bot)
 dp.message_handler(commands=['start'])(start.start)

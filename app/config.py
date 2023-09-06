@@ -8,7 +8,34 @@ class Config:
     BOT_TOKEN = os.getenv('BOT_TOKEN')
     URL_GLPI = os.getenv('URL_GLPI')
     FILE_PATH = './app/images'
-    FILE_LOG = './app/bot.log'
+
+    LOG_FILENAME = './app/log/bot_creation.log'
+    LOGGING_CONFIG = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "default": {
+                "format": "%(asctime)s module:%(name)s %(levelname)s: %(message)s",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            },
+        },
+        "handlers": {
+            "logfile": {
+                "formatter": "default",
+                "level": "INFO",
+                "class": "logging.handlers.RotatingFileHandler",
+                "filename": LOG_FILENAME,
+                "backupCount": 7,
+            },
+        },
+        "root": {
+            "level": "WARNING",
+            "handlers": [
+                "logfile",
+            ]
+        }
+    }
+
 
     # Database usage
     DB_HOST = os.getenv('DB_HOST')

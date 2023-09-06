@@ -8,11 +8,8 @@ from .utils import delete_inline_keyboard
 import logging
 
 
-# logging
-logging.basicConfig(level=logging.WARNING, filename=Config.FILE_LOG,
-                    format='%(asctime)s %(name)s %(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel('INFO')
 
 
 async def stop(message: types.Message):

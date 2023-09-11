@@ -3,9 +3,11 @@ version: "3"
 services:
   bot:
     build:
-#      context: "."
+      context: .
       dockerfile: Dockerfile
     container_name: bot_ogi_creation
 #    environment:
 #      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+    volumes:
+      - /var/log/bot:/code/app/log:rw
     restart: always

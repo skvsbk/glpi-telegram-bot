@@ -1,14 +1,11 @@
 import datetime
 import logging
 import pymysql
-from config import Config
+from app.config import Config
 
 
-# logging
-logging.basicConfig(level=logging.WARNING, filename='glpibot.log',
-                    format='%(asctime)s %(name)s %(levelname)s:%(message)s')
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel('INFO')
 
 
 def db_connetion():
@@ -43,11 +40,10 @@ def get_user_credentials(mobile):
             # query = f'SELECT glpi_users.id, api_token, firstname FROM glpi_users ' \
             #         f'WHERE mobile = "{mobile}" AND is_active=1'
 
-
             """
             SELECT glpi_users.id, api_token, firstname, glpi_locations.name AS locations_name FROM glpi_users
             JOIN glpi_locations ON glpi_users.locations_id = glpi_locations.id
-            WHERE mobile = "+7 (950) 014-93-24" AND is_active=1
+            WHERE mobile = "+7 (911) 009-65-76" AND is_active=1
             """
             query = f'SELECT glpi_users.id, api_token, firstname, glpi_locations.name AS locations_name ' \
                     f'FROM glpi_users ' \
@@ -62,9 +58,9 @@ def get_user_credentials(mobile):
                 user_credentials['firstname'] = row['firstname']
                 user_credentials['locations_name'] = row['locations_name']
     except:
-        logger.warning('get_user_credentials(mobile) - error getting user_id for %s', str(mobile))
+        logger.warning('get_user_credentials() - error getting user_id for %s', str(mobile))
     finally:
-        logger.info('the function get_user_credentials(mobile) is done for the mobile %s', str(mobile))
+        logger.info('the function get_user_credentials() is done for the mobile %s', str(mobile))
         connection.close()
 
     return user_credentials
@@ -82,9 +78,9 @@ def get_max_id(connection):
             for row in cursor:
                 max_id = row['MAX(id)']
     except:
-        logger.warning('get_max_id(connection) - error getting max_id')
+        logger.warning('get_max_id() - error getting max_id')
     finally:
-        logger.info('the function get_max_id(connection) is done')
+        logger.info('the function get_max_id() is done')
         connection.close()
 
     return max_id
@@ -116,15 +112,57 @@ def update_doc_item(documents_id, items_id, user_id):
             cursor.executemany(query, values)
             connection.commit()
     except:
-        logger.warning('update_doc_item(connection) - error updating item_id %s', items_id)
+        logger.warning('update_doc_item() - error updating item_id %s', items_id)
     finally:
-        logger.info('the update_doc_item(connection) is done for item_id %s', items_id)
+        logger.info('the update_doc_item() is done for item_id %s', items_id)
         connection.close()
+
+
+def get_location_id(location_name):
+    connection = db_connetion()
+    location_id = None
+    try:
+        with connection.cursor() as cursor:
+            """
+            SELECT * FROM glpi_locations WHERE name LIKE '%1.011%'
+            """
+            query = f"SELECT id FROM glpi_locations WHERE name LIKE '%{location_name}%'"
+            cursor.execute(query)
+            for row in cursor:
+                location_id = row['id']
+    except:
+        logger.warning('get_location_id() - error getting location_id %s', location_name)
+    finally:
+        logger.info('the get_location_id() is done for location_id %s', location_name)
+        connection.close()
+    return location_id
+
+
+def get_equipment_id(equipment_name):
+    connection = db_connetion()
+    equipment_id = None
+    try:
+        with connection.cursor() as cursor:
+            """
+            SELECT id, locations_id FROM glpi_peripherals WHERE name LIKE '%Р-1.038%'
+            """
+            query = f"SELECT id, locations_id FROM glpi_peripherals WHERE name LIKE '%{equipment_name}%'"
+            cursor.execute(query)
+            for row in cursor:
+                equipment_id = {'id': row['id'], 'locations_id': row['locations_id']}
+    except:
+        logger.warning('get_equipment_id() - error getting equipment_id %s', equipment_name)
+    finally:
+        logger.info('the get_equipment_id() is done for equipment_id %s', equipment_name)
+        connection.close()
+    return equipment_id
 
 
 if __name__ == '__main__':
     print('glpidb module')
     # u = get_user_credentials('+7 (921) 855-13-15')
-    u = get_user_credentials('+7 (981) 945-90-34')
+    # u = get_user_credentials('+7 (981) 945-90-34')
     # u = get_user_credentials('+7 (950) 014-93-24')
+    # u = get_location_id('1.011') #17
+    u = get_equipment_id('Р-1.038') #32
     print(u)

@@ -1,25 +1,17 @@
-FROM python:3.9-slim AS bot
+FROM python:3.9
 
-ENV PYTHONFAULTHANDLER=1
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONHASHSEED=random
+WORKDIR /code
+
 ENV PYTHONDONTWRITEBYTECODE 1
-ENV PIP_NO_CACHE_DIR=off
-ENV PIP_DISABLE_PIP_VERSION_CHECK=on
-ENV PIP_DEFAULT_TIMEOUT=100
+ENV PYTHONUNBUFFERED 1
 
-# Env vars
-#ENV TELEGRAM_TOKEN ${TELEGRAM_TOKEN}
+COPY ./requirements.txt /code/requirements.txt
 
-RUN apt-get update
-RUN apt-get install -y python3 python3-pip build-essential python3-venv
-# python-dev
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
-RUN mkdir -p /codebase /storage
-ADD . /app
-WORKDIR /app
+COPY ./app /code/app
+COPY ./.env /code
+COPY ./main.py /code
 
-RUN pip3 install -r requirements.txt
-#RUN chmod +x /codebase/main.py
-
-CMD python3 /app/main.py;
+CMD python3 main.py

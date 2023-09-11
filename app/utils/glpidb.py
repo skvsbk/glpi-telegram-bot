@@ -39,15 +39,25 @@ def get_user_credentials(mobile):
             # """
             # query = f'SELECT glpi_users.id, api_token, firstname FROM glpi_users ' \
             #         f'WHERE mobile = "{mobile}" AND is_active=1'
+            #
+            # SELECT glpi_users.id, api_token, firstname, glpi_locations.name AS locations_name FROM glpi_users
+            # JOIN glpi_locations ON glpi_users.locations_id = glpi_locations.id
+            # WHERE mobile = "+7 (911) 009-65-76" AND is_active=1
 
             """
-            SELECT glpi_users.id, api_token, firstname, glpi_locations.name AS locations_name FROM glpi_users
+            SELECT glpi_users.id, api_token, firstname, glpi_locations.name AS locations_name,
+            glpi_plugin_fields_usertelegramids.telegramidfield FROM glpi_users
             JOIN glpi_locations ON glpi_users.locations_id = glpi_locations.id
-            WHERE mobile = "+7 (911) 009-65-76" AND is_active=1
+            LEFT JOIN glpi_plugin_fields_usertelegramids ON glpi_plugin_fields_usertelegramids.items_id = glpi_users.id
+            WHERE mobile = "+7 (921) 855-13-15" AND is_active=1
             """
-            query = f'SELECT glpi_users.id, api_token, firstname, glpi_locations.name AS locations_name ' \
+
+            query = f'SELECT glpi_users.id, api_token, firstname, glpi_locations.name AS locations_name, ' \
+                    f'glpi_plugin_fields_usertelegramids.telegramidfield AS telegramid ' \
                     f'FROM glpi_users ' \
                     f'JOIN glpi_locations ON glpi_users.locations_id = glpi_locations.id ' \
+                    f'LEFT JOIN glpi_plugin_fields_usertelegramids ' \
+                    f'ON glpi_plugin_fields_usertelegramids.items_id = glpi_users.id ' \
                     f'WHERE mobile = "{mobile}" AND is_active=1'
 
             cursor.execute(query)
@@ -57,6 +67,7 @@ def get_user_credentials(mobile):
                 user_credentials['id'] = row['id']
                 user_credentials['firstname'] = row['firstname']
                 user_credentials['locations_name'] = row['locations_name']
+                user_credentials['telegramid'] = row['telegramid']
     except:
         logger.warning('get_user_credentials() - error getting user_id for %s', str(mobile))
     finally:
@@ -64,6 +75,39 @@ def get_user_credentials(mobile):
         connection.close()
 
     return user_credentials
+
+
+def put_telegramid_for_user(user_id, telegramid):
+
+    connection = db_connetion()
+    try:
+        with connection.cursor() as cursor:
+            # Check item with user_id in glpi_plugin_fields_usertelegramids
+            query = f'SELECT id FROM glpi_plugin_fields_usertelegramids WHERE items_id = {user_id}'
+            cursor.execute(query)
+            fields_is = None
+            for row in cursor:
+                fields_is = row['id']
+
+            if fields_is in ('', None):
+                # this is a new
+                """
+                INSERT INTO glpi_plugin_fields_usertelegramids (items_id, telegramidfield) VALUES (149, 11223344)
+                """
+                query = f'INSERT INTO glpi_plugin_fields_usertelegramids (items_id, telegramidfield) VALUES (%s, %s)'
+                cursor.execute(query, (user_id, telegramid))
+                connection.commit()
+            else:
+                query = f'UPDATE glpi_plugin_fields_usertelegramids SET telegramidfield = {telegramid} '\
+                        f'WHERE items_id = {user_id}'
+                cursor.execute(query)
+                connection.commit()
+
+    except:
+        logger.warning('put_telegramid_for_user() - error set TelegranID for user_id = %s', str(user_id))
+    finally:
+        logger.info('the function put_telegramid_for_user() is done for user_id %s', str(user_id))
+        connection.close()
 
 
 def get_max_id(connection):

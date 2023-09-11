@@ -22,6 +22,11 @@ async def authorization(message: types.Message):
     # Get user's credentials and continue if phone number contains in DB, else send /stop command
     user_credentials = glpidb.get_user_credentials(phone_for_send)  # dictionary with keys 'user_token' 'id' 'firstname'
     if user_credentials and user_credentials['user_token']:
+        # Save telegramid to user profile
+        if user_credentials['telegramid'] in ('', None):
+            glpidb.put_telegramid_for_user(user_credentials['id'], message.chat.id)
+
+        # Fill user_dict
         user_dict[message.chat.id] = glpiapi.User(user_id=user_credentials['id'],
                                                   token=user_credentials['user_token'],
                                                   locations_name=user_credentials['locations_name'])

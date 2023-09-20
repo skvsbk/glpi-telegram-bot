@@ -4,6 +4,7 @@ import json
 from app.config import Config
 from app.utils.glpidb import get_equipment_id, get_location_id
 
+
 import logging
 
 
@@ -43,7 +44,7 @@ class GLPI:
         # User session initialization
         headers = {
             "Content-Type": "application/json",
-            "Authorization": "user_token " + self.user.token
+            "Authorization": f"user_token {self.user.token}"
         }
         response = requests.get(self.url+"/initSession", headers=headers)
         if response.status_code == 401 or response.status_code == 400:

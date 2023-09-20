@@ -52,13 +52,12 @@ def get_user_credentials(mobile):
             WHERE mobile = "+7 (921) 855-13-15" AND is_active=1
             """
 
-            query = f'SELECT glpi_users.id, api_token, firstname, glpi_locations.name AS locations_name, ' \
-                    f'glpi_plugin_fields_usertelegramids.telegramidfield AS telegramid ' \
-                    f'FROM glpi_users ' \
-                    f'JOIN glpi_locations ON glpi_users.locations_id = glpi_locations.id ' \
-                    f'LEFT JOIN glpi_plugin_fields_usertelegramids ' \
-                    f'ON glpi_plugin_fields_usertelegramids.items_id = glpi_users.id ' \
-                    f'WHERE mobile = "{mobile}" AND is_active=1'
+            query = (f'SELECT glpi_users.id, api_token, firstname, glpi_locations.name AS locations_name, '
+                     f'glpi_plugin_fields_usertelegramids.telegramidfield AS telegramid '
+                     f'FROM glpi_users JOIN glpi_locations ON glpi_users.locations_id = glpi_locations.id '
+                     f'LEFT JOIN glpi_plugin_fields_usertelegramids '
+                     f'ON glpi_plugin_fields_usertelegramids.items_id = glpi_users.id'
+                     f' WHERE mobile = "{mobile}" AND is_active=1')
 
             cursor.execute(query)
 
@@ -98,8 +97,9 @@ def put_telegramid_for_user(user_id, telegramid):
                 cursor.execute(query, (user_id, telegramid))
                 connection.commit()
             else:
-                query = f'UPDATE glpi_plugin_fields_usertelegramids SET telegramidfield = {telegramid} '\
-                        f'WHERE items_id = {user_id}'
+                query = (f'UPDATE glpi_plugin_fields_usertelegramids '
+                         f'SET telegramidfield = {telegramid} '
+                         f'WHERE items_id = {user_id}')
                 cursor.execute(query)
                 connection.commit()
 
@@ -110,33 +110,7 @@ def put_telegramid_for_user(user_id, telegramid):
         connection.close()
 
 
-def get_max_id(connection):
-    """
-    :return: max id from table glpi_documents_items for use it as tab_id in update_doc_item
-    """
-    # connection = db_connetion()
-    try:
-        with connection.cursor() as cursor:
-            query = "SELECT MAX(id) FROM glpi_documents_items"
-            cursor.execute(query)
-            for row in cursor:
-                max_id = row['MAX(id)']
-    except:
-        logger.warning('get_max_id() - error getting max_id')
-    finally:
-        logger.info('the function get_max_id() is done')
-        connection.close()
-
-    return max_id
-
-
 def update_doc_item(documents_id, items_id, user_id):
-    """
-    :param documents_id: id uploaded image
-    :param items_id: ticket id
-    :param user_id: user id from get_user_credentials(mobile)
-    :return:
-    """
     connection = db_connetion()
     try:
         with connection.cursor() as cursor:
@@ -145,7 +119,7 @@ def update_doc_item(documents_id, items_id, user_id):
             cursor.execute(query)
             for row in cursor:
                 max_id = row['MAX(id)']
-            tab_id = max_id+1
+            tab_id = max_id + 1
 
             # update glpi_documents_items
             date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -193,7 +167,8 @@ def get_equipment_id(equipment_name):
             query = f"SELECT id, locations_id FROM glpi_peripherals WHERE name LIKE '%{equipment_name}%'"
             cursor.execute(query)
             for row in cursor:
-                equipment_id = {'id': row['id'], 'locations_id': row['locations_id']}
+                equipment_id = {'id': row['id'],
+                                'locations_id': row['locations_id']}
     except:
         logger.warning('get_equipment_id() - error getting equipment_id %s', equipment_name)
     finally:
@@ -202,11 +177,241 @@ def get_equipment_id(equipment_name):
     return equipment_id
 
 
+def query_tickets_init_atwork(user_id):
+    """
+    SELECT T1.id, T1.date, T1.name, T1.content, T1.status,
+    CONCAT(U1.realname, ' ', U1.firstname) AS handler_name
+    FROM glpi_tickets T1
+    JOIN glpi_tickets_users TU1 ON TU1.tickets_id = T1.id
+    JOIN glpi_users U1 ON U1.id = TU1.users_id
+    WHERE T1.id IN (SELECT glpi_tickets_users.tickets_id FROM glpi_tickets_users
+    WHERE glpi_tickets_users.users_id = 149
+    AND glpi_tickets_users.type = 1) AND T1.status IN (1, 2, 3, 4) AND T1.is_deleted = 0 AND TU1.type = 2
+    """
+    return (f'SELECT T1.id, T1.date, T1.name, T1.content, T1.status, '
+            f'CONCAT(U1.realname, " ", U1.firstname) AS user_name '
+            f'FROM glpi_tickets T1 '
+            f'JOIN glpi_tickets_users TU1 ON TU1.tickets_id = T1.id '
+            f'JOIN glpi_users U1 ON U1.id = TU1.users_id '
+            f'WHERE T1.id IN '
+            f'(SELECT glpi_tickets_users.tickets_id '
+            f'FROM glpi_tickets_users '
+            f'WHERE glpi_tickets_users.users_id = {user_id} '
+            f'AND glpi_tickets_users.type = 1) '
+            f'AND T1.status IN (1, 2, 3, 4) '
+            f'AND T1.is_deleted = 0 AND TU1.type = 2')
+
+
+def query_tickets_handler_atwork(user_id):
+    """
+     SELECT T1.id, T1.date, T1.name, T1.content, T1.status,
+     CONCAT(U1.realname, ' ', U1.firstname) AS init_name
+     FROM glpi_tickets T1
+     JOIN glpi_tickets_users TU1 ON TU1.tickets_id = T1.id
+     JOIN glpi_users U1 ON U1.id = TU1.users_id
+     WHERE T1.id IN (SELECT glpi_tickets_users.tickets_id FROM glpi_tickets_users
+     WHERE glpi_tickets_users.users_id = 149
+     AND glpi_tickets_users.type = 1) AND T1.status IN (1, 2, 3, 4) AND T1.is_deleted = 0 AND TU1.type = 2
+     """
+    return (f'SELECT T1.id, T1.date, T1.name, T1.content, T1.status, '
+            f'CONCAT(U1.realname, " ", U1.firstname) AS user_name '
+            f'FROM glpi_tickets T1 '
+            f'JOIN glpi_tickets_users TU1 ON TU1.tickets_id = T1.id '
+            f'JOIN glpi_users U1 ON U1.id = TU1.users_id '
+            f'WHERE T1.id IN '
+            f'(SELECT glpi_tickets_users.tickets_id '
+            f'FROM glpi_tickets_users '
+            f'WHERE glpi_tickets_users.users_id = {user_id} '
+            f'AND glpi_tickets_users.type = 2) '
+            f'AND T1.status IN (1, 2, 3, 4) '
+            f'AND T1.is_deleted = 0 AND TU1.type = 1')
+
+
+def query_solved_tickets(user_id):
+    """
+    SELECT T1.id, T1.date, T1.name, T1.content, T1.status,
+    CONCAT(U1.realname, ' ', U1.firstname) AS handler_name
+    FROM glpi_tickets T1
+    JOIN glpi_tickets_users TU1 ON TU1.tickets_id = T1.id
+    JOIN glpi_users U1 ON U1.id = TU1.users_id
+    WHERE T1.id IN (SELECT glpi_tickets_users.tickets_id FROM glpi_tickets_users
+    WHERE glpi_tickets_users.users_id = 149
+    AND glpi_tickets_users.type = 1) AND T1.status = 5 AND T1.is_deleted = 0 AND TU1.type = 2
+    """
+    return (f'SELECT T1.id, T1.date, T1.name, T1.content, T1.status, '
+            f'CONCAT(U1.realname, " ", U1.firstname) AS user_name '
+            f'FROM glpi_tickets T1 '
+            f'JOIN glpi_tickets_users TU1 ON TU1.tickets_id = T1.id '
+            f'JOIN glpi_users U1 ON U1.id = TU1.users_id '
+            f'WHERE T1.id IN '
+            f'(SELECT glpi_tickets_users.tickets_id '
+            f'FROM glpi_tickets_users '
+            f'WHERE glpi_tickets_users.users_id = {user_id} '
+            f'AND glpi_tickets_users.type = 1) '
+            f'AND T1.status = 5 '
+            f'AND T1.is_deleted = 0 AND TU1.type = 2')
+
+
+def get_tickets(query_string):
+    connection = db_connetion()
+    tickets = {}
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(query_string)
+            for row in cursor:
+                ticket_id = row['id']
+                tickets.update({ticket_id: {}})
+                tickets[ticket_id].update({'date': row['date']})
+                tickets[ticket_id].update({'name': row['name']})
+                tickets[ticket_id].update({'content': row['content'].replace('&lt;p&gt;', '').
+                                          replace('&lt;/p&gt;', ' ')})
+                tickets[ticket_id].update({'status': Config.GLPI_STATUS[row['status']]})
+                tickets[ticket_id].update({'user_name': row['user_name']})
+    except Exception as e:
+        logger.warning('get_tickets() - error getting tickets')
+        logger.warning('get_tickets() - error: %s', e)
+    finally:
+        logger.info('the get_tickets() is done for user_id')
+        connection.close()
+    return tickets
+
+
+def solve_ticket(user_id, ticket_id):
+    connection = db_connetion()
+    sucsess = False
+    try:
+        with connection.cursor() as cursor:
+            # update tickets
+            query_tickets = (f'UPDATE glpi_tickets '
+                             f'SET status = 5 '
+                             f'WHERE id = {ticket_id}')
+            cursor.execute(query_tickets)
+
+            # Insert solutions
+            date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            columns = 'itemtype, items_id, solutiontypes_id, content, date_creation, date_mod, users_id, status'
+            values = [('Ticket', ticket_id, 1, '&lt;p&gt;Выполнено, прошу проверить.(by tbot)&lt;/p&gt;',
+                       f'{date_time}', f'{date_time}', user_id, 2)]
+            query_solutions = f'INSERT INTO glpi_itilsolutions({columns}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
+            cursor.executemany(query_solutions, values)
+            connection.commit()
+
+    except:
+        logger.warning('solve_ticket() - error solving ticket_id %s', ticket_id)
+    finally:
+        logger.info('the solve_ticket() is done for solving ticket_id %s', ticket_id)
+        connection.close()
+    return sucsess
+
+
+def approve_ticket(user_id, ticket_id):
+    connection = db_connetion()
+    try:
+        with connection.cursor() as cursor:
+            # update tickets
+            query_tickets = (f'UPDATE glpi_tickets '
+                             f'SET status = 6, '
+                             f'users_id_lastupdater = {user_id} '
+                             f'WHERE id = {ticket_id}')
+            cursor.execute(query_tickets)
+
+            # Approve solution
+            date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            columns = ('itemtype, items_id, users_id, content, '
+                       'date, date_creation, date_mod, '
+                       'timeline_position, requesttypes_id')
+            values = [('Ticket', ticket_id, user_id, 'Решение одобрено (by tbot)',
+                       f'{date_time}', f'{date_time}', f'{date_time}',
+                       1, 1)]
+            query_itilfollowups = (f'INSERT INTO glpi_itilfollowups({columns}) '
+                                   f'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)')
+            cursor.executemany(query_itilfollowups, values)
+
+            query_itilsolutions = (f'UPDATE glpi_itilsolutions '
+                                   f'SET status = 2, '
+                                   f'solutiontypes_id = 1, '
+                                   f'users_id_approval = {user_id} '
+                                   f'WHERE items_id = {ticket_id} '
+                                   f'ORDER BY date_creation DESC '
+                                   f'LIMIT 1')
+
+            cursor.execute(query_itilsolutions)
+            connection.commit()
+    except:
+        logger.warning('close_ticket() - error closing ticket_id %s', ticket_id)
+    finally:
+        logger.info('the close_ticket() is done for closing ticket_id %s', ticket_id)
+        connection.close()
+
+
+def reject_ticket(user_id, ticket_id, msg_reason):
+    connection = db_connetion()
+    sucsess = False
+    try:
+        with connection.cursor() as cursor:
+            # update tickets
+            query_tickets = (f'UPDATE glpi_tickets '
+                             f'SET status = 2, '
+                             f'users_id_lastupdater = {user_id} '
+                             f'WHERE id = {ticket_id}')
+            cursor.execute(query_tickets)
+
+            # Approve solution
+            date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            columns = ('itemtype, items_id, users_id, content, '
+                       'date, date_creation, date_mod, '
+                       'timeline_position, requesttypes_id')
+            values = [('Ticket', ticket_id, user_id, f'{msg_reason} (by tbot)',
+                       f'{date_time}', f'{date_time}', f'{date_time}',
+                       1, 1)]
+            query_itilfollowups = (f'INSERT INTO glpi_itilfollowups({columns}) '
+                                   f'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)')
+            cursor.executemany(query_itilfollowups, values)
+
+            query_itilsolutions = (f'UPDATE glpi_itilsolutions '
+                                   f'SET status = 4, '
+                                   f'solutiontypes_id = 1, '
+                                   f'users_id_approval = {user_id} '
+                                   f'WHERE items_id = {ticket_id} '
+                                   f'ORDER BY date_creation DESC '
+                                   f'LIMIT 1')
+
+            cursor.execute(query_itilsolutions)
+            connection.commit()
+    except:
+        logger.warning('close_ticket() - error closing ticket_id %s', ticket_id)
+    finally:
+        logger.info('the close_ticket() is done for closing ticket_id %s', ticket_id)
+        connection.close()
+    return sucsess
+
+
+def check_ticket_status(ticket_id):
+    connection = db_connetion()
+    status = None
+    try:
+        with connection.cursor() as cursor:
+            query = f"SELECT status FROM glpi_tickets WHERE id={ticket_id} and is_deleted = 0"
+            cursor.execute(query)
+            for row in cursor:
+                status = row['status']
+    except:
+        logger.warning('check_ticket_status() - error ticket_id %s', ticket_id)
+    finally:
+        logger.info('the check_ticket_status() is done ticket_id %s', ticket_id)
+        connection.close()
+    return status
+
+
 if __name__ == '__main__':
     print('glpidb module')
     # u = get_user_credentials('+7 (921) 855-13-15')
     # u = get_user_credentials('+7 (981) 945-90-34')
     # u = get_user_credentials('+7 (950) 014-93-24')
     # u = get_location_id('1.011') #17
-    u = get_equipment_id('Р-1.038') #32
-    print(u)
+    # u = get_equipment_id('Р-1.038') #32
+    # u = get_tickets_handler(149)
+    # print(u)
+    # solve_ticket(149, 693)
+    # print(check_ticket_status(693))
+    approve_ticket(149, 691)

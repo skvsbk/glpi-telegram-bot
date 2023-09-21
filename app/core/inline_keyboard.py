@@ -98,10 +98,9 @@ async def callback_inline_keyboard(call):
     except Exception as err:
         logger.warning('callback_inline(%s) - some errors: %s and ticket was not created',
                        str(call.message.chat.id), repr(err))
-        await bot.edit_message_text(chat_id=call.message.chat.id,
-                                    message_id=call.message.id,
-                                    text=Config.MSG_ERROR_ATTENTION,
-                                    reply_markup=None)
+        await bot.send_message(chat_id=call.message.chat.id,
+                               text=Config.MSG_ERROR_ATTENTION,
+                               reply_markup=None)
         await stop_bot(call.message)
     finally:
         logger.info("the function callback_inline() is done for the id %s", str(call.message.chat.id))

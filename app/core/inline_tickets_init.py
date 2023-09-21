@@ -1,5 +1,5 @@
 from app.utils import user_dict, close_tickets_dict, ticket_for_approve
-from app.utils import glpidb
+from app.utils import glpidb, glpiapi
 from .utilities import delete_inline_keyboard, select_action
 from app.config import Config
 from app import bot
@@ -81,9 +81,10 @@ async def btn_approve(chat_id):
     # Delete inline keyboard
     await delete_inline_keyboard(chat_id)
     ticket_id = ticket_for_approve.get(chat_id)
-    user_id = user_dict[chat_id].id
-    glpidb.approve_ticket(user_id, ticket_id)
-    status = glpidb.check_ticket_status(ticket_id)
+    # Approve solution
+    glpiapi.approve_ticket(chat_id, ticket_id)
+    # Check status
+    status = glpiapi.check_ticket_status(chat_id, ticket_id)
     if status == 6:
         msg = f'Решение по заявке № {ticket_id} утверждено'
     else:
@@ -102,9 +103,10 @@ async def btn_reject(chat_id):
 
 async def reject_ticket_whith_msg(chat_id, msg_reject):
     ticket_id = ticket_for_approve.get(chat_id)
-    user_id = user_dict[chat_id].id
-    glpidb.reject_ticket(user_id, ticket_id, msg_reject)
-    status = glpidb.check_ticket_status(ticket_id)
+    # Do refuse
+    glpiapi.refuse_ticket(chat_id, ticket_id, msg_reject)
+    # Check status
+    status = glpiapi.check_ticket_status(chat_id, ticket_id)
     if status == 2:
         msg = f'Решение по заявке № {ticket_id} отклонено'
     else:

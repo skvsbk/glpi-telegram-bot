@@ -1,5 +1,5 @@
 from app.utils import user_dict, solve_tickets_dict
-from app.utils import glpidb
+from app.utils import glpidb, glpiapi
 from .utilities import delete_inline_keyboard, select_action
 from app.config import Config
 from app import bot
@@ -9,7 +9,7 @@ async def role_handler(chat_id):
     # Delete inline keyboard
     await delete_inline_keyboard(chat_id)
     await bot.send_message(chat_id=chat_id, text=Config.MSG_HANDLER_ROLE)
-    query_string = glpidb.query_tickets_handler_atwork(user_dict[chat_id].id)
+    query_string = glpidb.query_tickets_executer_atwork(user_dict[chat_id].id)
     tickets = glpidb.get_tickets(query_string)
     if tickets == {}:
         await bot.send_message(chat_id=chat_id, text=Config.MSG_HANDLER_EMPTY_ROLE)
@@ -50,11 +50,11 @@ async def btn_solve(chat_id, btn_name):
     # Delete inline keyboard
     await delete_inline_keyboard(chat_id)
     ticket_id = btn_name.replace('btn_solve_', '')
-    user_id = user_dict[chat_id].id
-    # Make changes in DB with status=5
-    glpidb.solve_ticket(user_id, ticket_id)
+    # Sovle ticket
+    glpiapi.solve_ticket(chat_id, ticket_id)
+
     # Check status
-    status = glpidb.check_ticket_status(ticket_id)
+    status = glpiapi.check_ticket_status(chat_id, ticket_id)
     if status == 5:
         msg = f'Заявка № {ticket_id} решена'
     else:

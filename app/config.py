@@ -161,3 +161,6 @@ class Config:
     REQUESTTYPE_ID = "8"
     # Incident = 1
     TYPE = "1"
+
+    MSG_SOLUTION = 'Выполнено, прошу проверить.(by bot)'
+    MSG_APPROVAL = 'Решение одобрено.(by bot)'

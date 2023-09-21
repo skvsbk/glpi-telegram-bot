@@ -8,6 +8,9 @@ async def start(message: types.Message):
     botton_send_phone = types.KeyboardButton(Config.BTN_SEND_NUMBER, request_contact=True)
     keyboard_send_phone.add(botton_send_phone)
     await bot.send_message(chat_id=message.chat.id,
-                           text=Config.MSG_AUTH_ATTENTION,
+                           text=Config.MSG_AUTH_ATTENTION_1,
+                           parse_mode='html')
+    await bot.send_message(chat_id=message.chat.id,
+                           text=Config.MSG_AUTH_ATTENTION_2,
                            parse_mode='html',
                            reply_markup=keyboard_send_phone)

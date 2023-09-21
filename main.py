@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 dp = Dispatcher(bot)
 dp.message_handler(commands=['start'])(start.start)
 dp.message_handler(content_types=['contact'])(authorization.authorization)
-dp.message_handler(commands=['stop'])(stop.stop)
+dp.message_handler(commands=['stop'])(stop.stop_bot)
 dp.message_handler(content_types=['text', 'photo', 'video', 'document'])(media.media)
 dp.callback_query_handler(lambda callback_query: True)(callback_inline_keyboard)
 

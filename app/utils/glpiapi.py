@@ -3,6 +3,8 @@ import requests
 import json
 from app.config import Config
 from app.utils.glpidb import get_equipment_id, get_location_id
+from app.utils import glpi_dict
+
 
 import logging
 
@@ -43,7 +45,7 @@ class GLPI:
         # User session initialization
         headers = {
             "Content-Type": "application/json",
-            "Authorization": "user_token " + self.user.token
+            "Authorization": f"user_token {self.user.token}"
         }
         response = requests.get(self.url+"/initSession", headers=headers)
         if response.status_code == 401 or response.status_code == 400:
@@ -140,6 +142,158 @@ class GLPI:
             doc_id = None
 
         return doc_id
+
+
+def api_request(headers: dict, url: str, payload: dict, request_type: str):
+    data = json.dumps(payload).encode('utf-8')
+
+    response = None
+
+    if request_type == 'post':
+        response = requests.post(url, headers=headers, data=data)
+    if request_type == 'put':
+        response = requests.put(url, headers=headers, data=data)
+
+    if response:
+        logger.info(f'{url} status_code={response.status_code}')
+        if response.status_code == 400:
+            logger.warning(f'{url} error = {response.text}')
+
+
+def solve_ticket(chat_id, ticket_id):
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "user_token " + glpi_dict[chat_id].user.token,
+        "Session-Token": glpi_dict[chat_id].session}
+
+    payload = {"input": {"items_id": ticket_id,
+                         "content": Config.MSG_SOLUTION,
+                         "users_id": glpi_dict[chat_id].user.id,
+                         "solutiontypes_id": 0,
+                         "itemtype": "Ticket",
+                         "status": 5,
+                         }
+               }
+    api_request(headers, f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILSolution', payload, 'post')
+
+
+def approve_ticket(chat_id, ticket_id):
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "user_token " + glpi_dict[chat_id].user.token,
+        "Session-Token": glpi_dict[chat_id].session}
+
+    # Get id of last solution
+    url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILSolution'
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        solution_id = json.loads(response.content)[-1]['id']
+    else:
+        return
+
+    request_list = []
+
+    # POST comment approval
+    payload = {"input": {"itemtype": "Ticket",
+                         "items_id": ticket_id,
+                         "users_id": glpi_dict[chat_id].user.id,
+                         "content": Config.MSG_APPROVAL,
+                         }
+               }
+
+    url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILFollowup'
+    request_list.append((url, payload, 'post'))
+
+    # PUT to last solution
+    payload = {"input": {"items_id": ticket_id,
+                         "users_id_approval": glpi_dict[chat_id].user.id,
+                         "solutiontypes_id": 1,
+                         "itemtype": "Ticket",
+                         "status": 3
+                         }
+               }
+
+    url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILSolution/{solution_id}'
+    request_list.append((url, payload, 'put'))
+
+    # PUT status Closed for Ticket
+    payload = {"input": {"id": ticket_id,
+                         "status": 6}
+               }
+    url = f'{Config.URL_GLPI}/Ticket/{ticket_id}'
+    request_list.append((url, payload, 'put'))
+
+    for item in request_list:
+        api_request(headers, item[0], item[1], item[2])
+
+
+def refuse_ticket(chat_id, ticket_id, msg_reason):
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "user_token " + glpi_dict[chat_id].user.token,
+        "Session-Token": glpi_dict[chat_id].session}
+
+    # Get id of last solution
+    url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILSolution'
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        solution_id = json.loads(response.content)[-1]['id']
+    else:
+        return
+
+    request_list = []
+
+    # POST comment approval
+    followup_dict = {"input": {"itemtype": "Ticket",
+                               "items_id": ticket_id,
+                               "users_id": glpi_dict[chat_id].user.id,
+                               "content": msg_reason,
+                               }
+                     }
+
+    url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILFollowup'
+    request_list.append((url, followup_dict, 'post'))
+
+    # PUT to last solution
+    solution_dict = {"input": {"items_id": ticket_id,
+                               # "content": Config.MSG_SOLUTION,
+                               "users_id": 0,
+                               "users_id_approval": glpi_dict[chat_id].user.id,
+                               "solutiontypes_id": 0,
+                               "itemtype": "Ticket",
+                               "status": 4,
+                               }
+                     }
+
+    url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILSolution/{solution_id}'
+    request_list.append((url, solution_dict, 'put'))
+
+    # PUT status Closed for Ticket
+    ticket_dict = {"input": {"id": ticket_id,
+                             "status": 2}
+                   }
+    url = f'{Config.URL_GLPI}/Ticket/{ticket_id}'
+    request_list.append((url, ticket_dict, 'put'))
+
+    for item in request_list:
+        api_request(headers, item[0], item[1], item[2])
+
+
+def check_ticket_status(chat_id, ticket_id):
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "user_token " + glpi_dict[chat_id].user.token,
+        "Session-Token": glpi_dict[chat_id].session}
+
+    # Get id of last solution
+    url = f'{Config.URL_GLPI}/Ticket/{ticket_id}'
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return json.loads(response.content)['status']
+    else:
+        return 0
 
 
 if __name__ == '__main__':

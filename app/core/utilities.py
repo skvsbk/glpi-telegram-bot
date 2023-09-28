@@ -32,12 +32,13 @@ async def select_action(chat_id, kbd_action, msg_action, add_msg_id=True):
 
 
 async def make_category_keyboard(chat_id):
-    kbd_category = {'btn_categ_help': Config.KBD_CATEGORY['btn_categ_help'][0],
-                    'btn_category_1': Config.KBD_CATEGORY['btn_category_1'][0],
+    kbd_category = {'btn_category_1': Config.KBD_CATEGORY['btn_category_1'][0],
                     'btn_category_2': Config.KBD_CATEGORY['btn_category_2'][0],
                     'btn_category_3': Config.KBD_CATEGORY['btn_category_3'][0],
                     'btn_category_4': Config.KBD_CATEGORY['btn_category_4'][0],
                     'btn_category_5': Config.KBD_CATEGORY['btn_category_5'][0],
                     'btn_category_6': Config.KBD_CATEGORY['btn_category_6'][0],
-                    'btn_category_7': Config.KBD_CATEGORY['btn_category_7'][0]}
+                    'btn_category_7': Config.KBD_CATEGORY['btn_category_7'][0],
+                    'btn_category_8': Config.KBD_CATEGORY['btn_category_8'][0],
+                    'btn_categ_help': Config.KBD_CATEGORY['btn_categ_help'][0]}
     await select_action(chat_id, kbd_category, Config.MSG_SELECT_TYPE, add_msg_id=True)

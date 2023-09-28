@@ -39,6 +39,9 @@ async def callback_inline_keyboard(call):
             elif call.data.startswith('btn_close_'):
                 await inline_tickets_init.btn_close(chat_id, call.data)
 
+            elif call.data.startswith('btn_comment_'):
+                await inline_tickets_init.btn_comment(chat_id, call.data)
+
             if call.data == 'btn_init_status_solved':
                 await inline_tickets_init.status_solved(chat_id)
 
@@ -47,6 +50,9 @@ async def callback_inline_keyboard(call):
 
             if call.data == 'btn_init_status_atwork':
                 await inline_tickets_init.status_atwork(chat_id)
+
+            if call.data == 'btn_init_comment':
+                await inline_tickets_init.comment_tickets(chat_id)
 
             if call.data == 'btn_init_approve':
                 await inline_tickets_init.btn_approve(chat_id)

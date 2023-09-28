@@ -2,10 +2,10 @@ import random
 from aiogram import types
 from app.config import Config
 from app import bot
-from app.utils import ticket_dict, msgid_dict, ticket_for_approve
+from app.utils import ticket_dict, msgid_dict, ticket_for_approve, ticket_for_comment
 from .utilities import select_action, delete_inline_keyboard, make_keyboard_inline, make_category_keyboard
 from .stop import stop_bot
-from .inline_tickets_init import reject_ticket_whith_msg
+from .inline_tickets_init import reject_ticket_whith_msg, leave_comment
 
 import logging
 
@@ -64,8 +64,11 @@ async def media(message: types.Message):
                 # Select category keyboard
                 await make_category_keyboard(chat_id)
 
-            elif ticket_for_approve[chat_id]:
+            elif ticket_for_approve.get(chat_id):
                 await reject_ticket_whith_msg(chat_id, message.text)
+
+            elif ticket_for_comment.get(chat_id):
+                await leave_comment(chat_id, message.text)
 
             else:
                 if len(msgid_dict[chat_id]) > 0:

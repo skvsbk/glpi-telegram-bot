@@ -2,7 +2,7 @@ import os
 from aiogram import types
 from app.config import Config
 from app import bot
-from app.utils import user_dict, glpi_dict, ticket_dict, msgid_dict, solve_tickets_dict, close_tickets_dict
+from app.utils import user_dict, glpi_dict, ticket_dict, msgid_dict, tickets_for_solve_dict, tickets_for_close_dict
 from .utilities import delete_inline_keyboard
 
 import logging
@@ -28,8 +28,8 @@ async def stop_bot(message: types.Message):
         glpi_dict.pop(chat_id)
         ticket_dict.pop(chat_id)
         msgid_dict.pop(chat_id)
-        solve_tickets_dict.pop(chat_id)
-        close_tickets_dict.pop(chat_id)
+        tickets_for_solve_dict.pop(chat_id)
+        tickets_for_close_dict.pop(chat_id)
 
     except:
         logger.warning('execute_on_exit(%s) - error cleaning dictionaries', str(chat_id))

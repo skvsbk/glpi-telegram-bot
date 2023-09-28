@@ -69,8 +69,11 @@ class Config:
     MSG_SELECT_STATUS = "Выберите статус заявки:"
     MSG_SELECT_FOR_SOLVE = "Выберите заявку для решения"
     MSG_SELECT_FOR_CLOSE = "Выберите заявку для закрытия"
+    MSG_SELECT_FOR_COMMENT = "Выберите заявку для комментария"
 
     MSG_REJECT_REASON = "Опишите причину:"
+
+    MSG_LEAVE_COMMENT = "Оставьте комментарий:"
 
     MSG_HANDLER_ROLE = "Роль: Исполнитель"
     MSG_HANDLER_EMPTY_ROLE = "Нет заявок, где Вы назначены исполнителем"
@@ -142,6 +145,9 @@ class Config:
                   "btn_init_status_solved": "Решена"}
 
     KBD_CLOSE_TICKET = {'btn_init_close': "Закрыть заявки",
+                        'btn_tickets_exit': "Назад"}
+
+    KBD_COMMENT_TICKET = {'btn_init_comment': "Оставить коммент",
                         'btn_tickets_exit': "Назад"}
 
     KBD_SOLVE_TICKET = {'btn_handler_solve': "Решить заявки",

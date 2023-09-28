@@ -1,4 +1,4 @@
-from app.utils import user_dict, solve_tickets_dict
+from app.utils import user_dict, tickets_for_solve_dict
 from app.utils import glpidb, glpiapi
 from .utilities import delete_inline_keyboard, select_action
 from app.config import Config
@@ -16,7 +16,7 @@ async def role_handler(chat_id):
         # Select action
         await select_action(chat_id, Config.KBD_ACTION, Config.MSG_SELECT_ACTION, True)
     else:
-        solve_tickets_dict[chat_id] = []
+        tickets_for_solve_dict[chat_id] = []
         for item in tickets.items():
             msg_item = (f"<b>Заявка № {item[0]}</b>\n"
                         f"Дата: {item[1]['date']}\n"
@@ -28,7 +28,7 @@ async def role_handler(chat_id):
                                    text=msg_item,
                                    parse_mode='html')
             # Fill the dict for further make inline keyboard and make solve ticket
-            solve_tickets_dict[chat_id].append(item[0])
+            tickets_for_solve_dict[chat_id].append(item[0])
 
         # Select action for solve tickets
         await select_action(chat_id, Config.KBD_SOLVE_TICKET, Config.MSG_SELECT_ACTION, True)
@@ -39,7 +39,7 @@ async def solve_tickets(chat_id):
     await delete_inline_keyboard(chat_id)
     # Make inline keyboard with tickets number
     kbd_tickets = {}
-    for item in solve_tickets_dict[chat_id]:
+    for item in tickets_for_solve_dict[chat_id]:
         kbd_tickets.update({f'btn_solve_{item}': str(item)})
     kbd_tickets.update({f'btn_tickets_exit': "Назад"})
     # Select action fir solve tickets

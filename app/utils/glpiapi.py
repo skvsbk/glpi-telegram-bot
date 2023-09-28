@@ -159,6 +159,8 @@ def api_request(headers: dict, url: str, payload: dict, request_type: str):
         if response.status_code == 400:
             logger.warning(f'{url} error = {response.text}')
 
+    return response
+
 
 def solve_ticket(chat_id, ticket_id):
     headers = {
@@ -294,6 +296,24 @@ def check_ticket_status(chat_id, ticket_id):
         return json.loads(response.content)['status']
     else:
         return 0
+
+
+def leave_ticket_comment(chat_id, ticket_id, comment):
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "user_token " + glpi_dict[chat_id].user.token,
+        "Session-Token": glpi_dict[chat_id].session}
+
+    # POST comment
+    payload = {"input": {"itemtype": "Ticket",
+                               "items_id": ticket_id,
+                               "users_id": glpi_dict[chat_id].user.id,
+                               "content": comment,
+                               }
+                     }
+
+    url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILFollowup'
+    return api_request(headers, url, payload, 'post')
 
 
 if __name__ == '__main__':

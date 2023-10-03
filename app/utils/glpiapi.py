@@ -45,13 +45,18 @@ class GLPI:
         # User session initialization
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"user_token {self.user.token}"
+            "Authorization": "user_token " + self.user.token
         }
         response = requests.get(self.url+"/initSession", headers=headers)
         if response.status_code == 401 or response.status_code == 400:
             self.session = None
+            self.header = None
         else:
             self.session = json.loads(response.text).get('session_token')
+            self.headers = {"Content-Type": "application/json",
+                            "Authorization": "user_token " + self.user.token,
+                            "Session-Token": self.session
+                            }
 
     def __del__(self):
         """
@@ -68,11 +73,6 @@ class GLPI:
         :return: ticket_id
         """
         if self.ticket.id is None:
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": "user_token " + self.user.token,
-                "Session-Token": self.session
-            }
             if self.ticket.content == '':
                 self.ticket.content = self.ticket.name
 
@@ -103,8 +103,8 @@ class GLPI:
                 if equipment_ids is not None and equipment_ids['locations_id']:
                     msg_dict["input"].update({"locations_id": equipment_ids['locations_id']})
 
-            msg = json.dumps(msg_dict).encode('utf-8')
-            response = requests.post(self.url+"/Ticket", headers=headers, data=msg)
+            payload = json.dumps(msg_dict).encode('utf-8')
+            response = requests.post(self.url+"/Ticket", headers=self.headers, data=payload)
             logger.info(f'{self.url}/Ticket status_code={response.status_code}')
 
             if response.status_code == 201:
@@ -117,18 +117,13 @@ class GLPI:
                                           "items_id": equipment_ids['id'],
                                           "itemtype": "Peripheral"}
                                 }
-                    msg = json.dumps(msg_dict).encode('utf-8')
-                    response = requests.post(url, headers=headers, data=msg)
+                    payload = json.dumps(msg_dict).encode('utf-8')
+                    response = requests.post(url, headers=self.headers, data=payload)
                     logger.info(f'{url} status_code={response.status_code}')
 
         return self.ticket.id
 
     def upload_doc(self, file_path, filename):
-        """
-        :param file_path: path to downloaded files
-        :param filename: from 'ticket.attachment'
-        :return: noting
-        """
         headers = {'Session-Token': self.session}
         files = {'uploadManifest': (None, '{"input": {"name": "Документ заявки '+str(self.ticket.id) +
                                     ' (tb)", "_filename": ["' + filename + '"]}}', 'application/json'),
@@ -145,14 +140,14 @@ class GLPI:
 
 
 def api_request(headers: dict, url: str, payload: dict, request_type: str):
-    data = json.dumps(payload).encode('utf-8')
+    payload = json.dumps(payload).encode('utf-8')
 
     response = None
 
     if request_type == 'post':
-        response = requests.post(url, headers=headers, data=data)
+        response = requests.post(url, headers=headers, data=payload)
     if request_type == 'put':
-        response = requests.put(url, headers=headers, data=data)
+        response = requests.put(url, headers=headers, data=payload)
 
     if response:
         logger.info(f'{url} status_code={response.status_code}')
@@ -163,11 +158,7 @@ def api_request(headers: dict, url: str, payload: dict, request_type: str):
 
 
 def solve_ticket(chat_id, ticket_id):
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "user_token " + glpi_dict[chat_id].user.token,
-        "Session-Token": glpi_dict[chat_id].session}
-
+    headers = glpi_dict[chat_id].headers
     payload = {"input": {"items_id": ticket_id,
                          "content": Config.MSG_SOLUTION,
                          "users_id": glpi_dict[chat_id].user.id,
@@ -180,11 +171,7 @@ def solve_ticket(chat_id, ticket_id):
 
 
 def approve_ticket(chat_id, ticket_id):
-
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "user_token " + glpi_dict[chat_id].user.token,
-        "Session-Token": glpi_dict[chat_id].session}
+    headers = glpi_dict[chat_id].headers
 
     # Get id of last solution
     url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILSolution'
@@ -231,11 +218,7 @@ def approve_ticket(chat_id, ticket_id):
 
 
 def refuse_ticket(chat_id, ticket_id, msg_reason):
-
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "user_token " + glpi_dict[chat_id].user.token,
-        "Session-Token": glpi_dict[chat_id].session}
+    headers = glpi_dict[chat_id].headers
 
     # Get id of last solution
     url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILSolution'
@@ -284,10 +267,7 @@ def refuse_ticket(chat_id, ticket_id, msg_reason):
 
 
 def check_ticket_status(chat_id, ticket_id):
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "user_token " + glpi_dict[chat_id].user.token,
-        "Session-Token": glpi_dict[chat_id].session}
+    headers = glpi_dict[chat_id].headers
 
     # Get id of last solution
     url = f'{Config.URL_GLPI}/Ticket/{ticket_id}'
@@ -299,10 +279,7 @@ def check_ticket_status(chat_id, ticket_id):
 
 
 def leave_ticket_comment(chat_id, ticket_id, comment):
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "user_token " + glpi_dict[chat_id].user.token,
-        "Session-Token": glpi_dict[chat_id].session}
+    headers = glpi_dict[chat_id].headers
 
     # POST comment
     payload = {"input": {"itemtype": "Ticket",

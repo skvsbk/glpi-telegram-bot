@@ -1,7 +1,7 @@
 from aiogram import types
 from app.config import Config
 from app import bot
-from app.utils import user_dict, glpi_dict, ticket_dict, msgid_dict
+from app.utils import user_dict, glpi_dict, ticket_dict, msg_id_dict, project_dict
 from app.utils import glpiapi, glpidb
 from .utilities import select_action, delete_inline_keyboard
 from .stop import stop_bot
@@ -37,14 +37,19 @@ async def authorization(message: types.Message):
             await bot.send_message(chat_id=chat_id,
                                    text=Config.MSG_AUTH_ERROR,
                                    reply_markup=None)
-            logger.warning('read_contact_phone(message) Authorisation Error for id %s and phone %s',
+            logger.warning('authorization(message) error for id %s and phone %s - empty user.session',
                            str(chat_id), phone_for_send)
             await stop_bot(message)
             return
 
         # Create empty ticket
         ticket_dict[chat_id] = glpiapi.Ticket()
-        msgid_dict[chat_id] = [message.message_id]
+
+        # Create empty ticket (kaidzen)
+        project_dict[chat_id] = glpiapi.Project()
+
+        # This is for delete keyboard
+        msg_id_dict[chat_id] = [message.message_id]
 
         item_remove = types.ReplyKeyboardRemove()
         await bot.send_message(chat_id=chat_id,

@@ -186,7 +186,6 @@ class Config:
                       3: 'Закрыто',
                       4: 'Отклонено'}
 
-
     # Create ticket by API
     # TelegramBot = 8
     REQUESTTYPE_ID = "8"

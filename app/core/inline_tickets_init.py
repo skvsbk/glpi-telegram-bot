@@ -1,5 +1,6 @@
 from .serializer import serialize_ticket
-from app.utils import user_dict, tickets_for_close_dict, ticket_for_approve, tickets_for_comment_dict, ticket_for_comment
+from app.utils import user_dict, tickets_for_close_dict, ticket_for_approve, tickets_for_comment_dict
+from app.utils import ticket_for_comment
 from app.utils import glpidb, glpiapi
 from .utilities import delete_inline_keyboard, select_action
 from app.config import Config
@@ -35,9 +36,7 @@ async def status_atwork(chat_id):
             tickets_for_comment_dict[chat_id].append(ticket[0])
 
         # Select action
-        #await select_action(chat_id, Config.KBD_ACTION, Config.MSG_SELECT_ACTION, True)
         await select_action(chat_id, Config.KBD_COMMENT_TICKET, Config.MSG_SELECT_ACTION, True)
-
 
 
 async def status_solved(chat_id):
@@ -148,6 +147,7 @@ async def close_tickets(chat_id):
     kbd_tickets.update({f'btn_tickets_exit': "Назад"})
     # Select action fir close tickets
     await select_action(chat_id, kbd_tickets, Config.MSG_SELECT_FOR_CLOSE, True)
+
 
 async def comment_tickets(chat_id):
     # Delete inline keyboard

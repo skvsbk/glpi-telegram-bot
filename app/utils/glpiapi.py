@@ -200,8 +200,7 @@ class GLPI:
                 logger.warning(f'{self.url} error = {response.text}')
 
 
-
-def api_request(headers: dict, url: str, payload: dict, request_type: str):
+def api_request(headers: dict, url: str, payload, request_type: str):
     data = json.dumps(payload).encode('utf-8')
 
     response = None
@@ -354,6 +353,7 @@ def leave_ticket_comment(chat_id, ticket_id, comment):
     url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILFollowup'
     return api_request(headers, url, payload, 'post')
 
+
 def get_user_projects(chat_id):
     headers = glpi_dict[chat_id].headers
     user_id = user_dict[chat_id].id
@@ -367,7 +367,6 @@ def get_user_projects(chat_id):
             return
         projects = response.content
         return json.loads(projects)
-
 
 
 if __name__ == '__main__':

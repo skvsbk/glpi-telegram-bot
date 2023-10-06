@@ -112,8 +112,11 @@ class Config:
 
     MSG_ERROR_ATTENTION = "Что-то пошло не так. Возможно необходимо авторизоваться, нажав /start. " + \
                           "Обратитесь в IT-отдел."
-    MSG_ERROR_SEND = "Заявка не создана. Обратитесь в ИТ-отдел."
+    MSG_ERROR_SEND_TICKET = "Заявка не создана. Обратитесь в ИТ-отдел."
+    MSG_ERROR_SEND_KAIDZEN = "Kaidzen не создан. Обратитесь в ИТ-отдел."
     MSG_CANCEL = "Заявка отменена."
+    MSG_MY_TICKETS = "Мои завяки"
+    MSG_PROJECT_DESCRIPTION = "Введите описание улучшения:"
 
     # Keyboards
     KBD_CATEGORY = {"btn_category_1": ("Замена", 6),
@@ -133,10 +136,15 @@ class Config:
 
     KBD_ACTION = {"bnt_action_make": "Подать заявку",
                   "bnt_action_mytickets": "Мои заявки",
+                  "bnt_action_kaidzen": "Kaidzen",
                   "btn_action_exit": "Выход"}
 
     KBD_THEME = {"btn_theme_room": BTN_THEME_ROOM,
                  "btn_theme_equipment": BTN_THEME_EQIPMENT}
+
+    KBD_ADD_SEND_CANCEL_TICKET = {"btn_add_ticket": "Дополнить",
+                                  "btn_send_ticket": "Отправить в ОГИ",
+                                  "btn_cancel_ticket": "Отменить"}
 
     KBD_ROLE = {"btn_role_init": "Инициатор",
                 "btn_role_handler": "Исполнитель"}
@@ -148,7 +156,7 @@ class Config:
                         'btn_tickets_exit': "Назад"}
 
     KBD_COMMENT_TICKET = {'btn_init_comment': "Оставить коммент",
-                        'btn_tickets_exit': "Назад"}
+                          'btn_tickets_exit': "Назад"}
 
     KBD_SOLVE_TICKET = {'btn_handler_solve': "Решить заявки",
                         'btn_tickets_exit': "Назад"}
@@ -156,6 +164,14 @@ class Config:
     KBD_APPROVE_REJECT = {'btn_init_approve': "Утвердить",
                           'btn_init_reject': "Отклонить",
                           'btn_tickets_exit': "Назад"}
+
+    KBD_KAIDZEN = {'btn_kaidzen_make': "Предложить",
+                   'btn_kaidzen_my_offers': "Мой kaidzen",
+                   'btn_tickets_exit': "Назад"}
+
+    KBD_ADD_SEND_CANCEL_KAIDZEN = {'btn_add_kaidzen': "Дополнить",
+                                   'btn_send_kaidzen': "Отправить kaidzen",
+                                   'btn_cancel_kaidzen': "Отменить"}
 
     GLPI_STATUS = {1: 'Новый',
                    2: 'В работе (назначена)',
@@ -172,3 +188,5 @@ class Config:
 
     MSG_SOLUTION = 'Выполнено, прошу проверить.(by bot)'
     MSG_APPROVAL = 'Решение одобрено.(by bot)'
+
+    PROJECT_MANAGER_ID = 35

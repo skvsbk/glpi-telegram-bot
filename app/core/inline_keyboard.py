@@ -2,7 +2,7 @@ from app.config import Config
 from app import bot
 from .utilities import delete_inline_keyboard, select_action
 from .stop import stop_bot
-from . import inline_common, inline_tickets_init, inline_make_ticket, inline_tickets_handler
+from . import inline_common, inline_tickets_init, inline_make_ticket, inline_tickets_handler, inline_kaidzen
 
 import logging
 
@@ -33,13 +33,13 @@ async def callback_inline_keyboard(call):
             if call.data == 'btn_handler_solve':
                 await inline_tickets_handler.solve_tickets(chat_id)
 
-            elif call.data.startswith('btn_solve_'):
+            if call.data.startswith('btn_solve_'):
                 await inline_tickets_handler.btn_solve(chat_id, call.data)
 
-            elif call.data.startswith('btn_close_'):
+            if call.data.startswith('btn_close_'):
                 await inline_tickets_init.btn_close(chat_id, call.data)
 
-            elif call.data.startswith('btn_comment_'):
+            if call.data.startswith('btn_comment_'):
                 await inline_tickets_init.btn_comment(chat_id, call.data)
 
             if call.data == 'btn_init_status_solved':
@@ -63,18 +63,35 @@ async def callback_inline_keyboard(call):
             if call.data == 'btn_theme_equipment':
                 await inline_make_ticket.theme_equipment(chat_id)
 
+            # if call.data == 'btn_theme_room':
             if call.data == 'btn_theme_room':
                 await inline_make_ticket.theme_room(chat_id)
 
-            elif call.data == 'btn_add':
-                await inline_make_ticket.btn_add(chat_id, message_id)
+            if call.data == 'btn_add_ticket':
+                await inline_make_ticket.btn_add_ticket(chat_id, message_id)
 
-            elif call.data == 'btn_send':
-                await inline_make_ticket.btn_send(chat_id)
+            if call.data == 'btn_send_ticket':
+                await inline_make_ticket.btn_send_ticket(chat_id)
                 await stop_bot(call.message)
 
-            elif call.data in ('btn_cancel', 'btn_action_exit'):
-                await inline_make_ticket.cancel_or_exit(chat_id, message_id)
+            if call.data == 'bnt_action_kaidzen':
+                await inline_kaidzen.action_kaidzen(chat_id)
+
+            if call.data == 'btn_kaidzen_my_offers':
+                await inline_kaidzen.kaidzen_my_offers(chat_id)
+
+            if call.data == 'btn_kaidzen_make':
+                await inline_kaidzen.kaidzen_add_name(chat_id)
+
+            if call.data == 'btn_add_kaidzen':
+                await inline_kaidzen.btn_add_kaidzen(chat_id)
+
+            if call.data == 'btn_send_kaidzen':
+                await inline_kaidzen.btn_send_kaidzen(chat_id)
+                await stop_bot(call.message)
+
+            if call.data in ('btn_cancel_ticket', 'btn_action_exit'):
+                await inline_make_ticket.cancel_or_exit_ticket(chat_id, message_id)
                 await stop_bot(call.message)
 
             if call.data == 'btn_tickets_exit':
@@ -84,23 +101,24 @@ async def callback_inline_keyboard(call):
                 await select_action(chat_id, Config.KBD_ACTION, Config.MSG_SELECT_ACTION, True)
 
             # Select Help
-            elif call.data == 'btn_categ_help':
+            if call.data == 'btn_categ_help':
                 await inline_common.btn_help(chat_id)
 
             # Select Understand
-            elif call.data == 'btn_understand':
+            if call.data == 'btn_understand':
                 await inline_common.btn_understand(chat_id)
 
             # Select category
-            elif call.data.startswith('btn_category_'):
+            if call.data.startswith('btn_category_'):
                 await inline_make_ticket.btn_category(chat_id, call.data)
 
             # Select urgency
-            elif call.data.startswith('btn_urgency_'):
+            if call.data.startswith('btn_urgency_'):
                 await inline_make_ticket.btn_urgency(chat_id, call.data)
 
-            else:
-                pass
+            # else:
+            #     pass
+
     except Exception as err:
         logger.warning('callback_inline(%s) - some errors: %s and ticket was not created',
                        str(call.message.chat.id), repr(err))

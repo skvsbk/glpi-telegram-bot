@@ -1,4 +1,3 @@
-import datetime
 import logging
 import pymysql
 from app.config import Config
@@ -30,7 +29,7 @@ def get_user_credentials(mobile):
     :return: dictionary with user params
     """
     connection = db_connetion()
-    user_credentials = dict()
+    user_creds = dict()
     try:
         with connection.cursor() as cursor:
             # """
@@ -62,18 +61,18 @@ def get_user_credentials(mobile):
             cursor.execute(query)
 
             for row in cursor:
-                user_credentials['user_token'] = row['api_token']
-                user_credentials['id'] = row['id']
-                user_credentials['firstname'] = row['firstname']
-                user_credentials['locations_name'] = row['locations_name']
-                user_credentials['telegramid'] = row['telegramid']
+                user_creds['user_token'] = row.get('api_token')
+                user_creds['id'] = row.get('id')
+                user_creds['firstname'] = row.get('firstname')
+                user_creds['locations_name'] = row.get('locations_name')
+                user_creds['telegramid'] = row.get('telegramid')
     except:
         logger.warning('get_user_credentials() - error getting user_id for %s', str(mobile))
     finally:
         logger.info('the function get_user_credentials() is done for the mobile %s', str(mobile))
         connection.close()
 
-    return user_credentials
+    return user_creds
 
 
 def put_telegramid_for_user(user_id, telegramid):
@@ -86,7 +85,7 @@ def put_telegramid_for_user(user_id, telegramid):
             cursor.execute(query)
             fields_is = None
             for row in cursor:
-                fields_is = row['id']
+                fields_is = row.get('id')
 
             if fields_is in ('', None):
                 # this is a new
@@ -110,32 +109,6 @@ def put_telegramid_for_user(user_id, telegramid):
         connection.close()
 
 
-def update_doc_item(documents_id, items_id, user_id):
-    connection = db_connetion()
-    try:
-        with connection.cursor() as cursor:
-            # get max id
-            query = "SELECT MAX(id) FROM glpi_documents_items"
-            cursor.execute(query)
-            for row in cursor:
-                max_id = row['MAX(id)']
-            tab_id = max_id + 1
-
-            # update glpi_documents_items
-            date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            columns = 'id, documents_id, items_id, itemtype, entities_id, is_recursive, date_mod, ' \
-                      'users_id, timeline_position, date_creation'
-            values = [(tab_id, documents_id, items_id, 'Ticket', 0, 1, f'{date_time}', user_id, 1, f'{date_time}')]
-            query = f"INSERT INTO glpi_documents_items({columns}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-            cursor.executemany(query, values)
-            connection.commit()
-    except:
-        logger.warning('update_doc_item() - error updating item_id %s', items_id)
-    finally:
-        logger.info('the update_doc_item() is done for item_id %s', items_id)
-        connection.close()
-
-
 def get_location_id(location_name):
     connection = db_connetion()
     location_id = None
@@ -147,7 +120,7 @@ def get_location_id(location_name):
             query = f"SELECT id FROM glpi_locations WHERE name LIKE '%{location_name}%'"
             cursor.execute(query)
             for row in cursor:
-                location_id = row['id']
+                location_id = row.get('id')
     except:
         logger.warning('get_location_id() - error getting location_id %s', location_name)
     finally:
@@ -167,8 +140,8 @@ def get_equipment_id(equipment_name):
             query = f"SELECT id, locations_id FROM glpi_peripherals WHERE name LIKE '%{equipment_name}%'"
             cursor.execute(query)
             for row in cursor:
-                equipment_id = {'id': row['id'],
-                                'locations_id': row['locations_id']}
+                equipment_id = {'id': row.get('id'),
+                                'locations_id': row.get('locations_id')}
     except:
         logger.warning('get_equipment_id() - error getting equipment_id %s', equipment_name)
     finally:
@@ -259,14 +232,14 @@ def get_tickets(query_string):
         with connection.cursor() as cursor:
             cursor.execute(query_string)
             for row in cursor:
-                ticket_id = row['id']
+                ticket_id = row.get('id')
                 tickets.update({ticket_id: {}})
-                tickets[ticket_id].update({'date': row['date']})
-                tickets[ticket_id].update({'name': row['name']})
-                tickets[ticket_id].update({'content': row['content'].replace('&lt;p&gt;', '').
+                tickets[ticket_id].update({'date': row.get('date')})
+                tickets[ticket_id].update({'name': row.get('name')})
+                tickets[ticket_id].update({'content': row.get('content').replace('&lt;p&gt;', '').
                                           replace('&lt;/p&gt;', ' ')})
-                tickets[ticket_id].update({'status': Config.GLPI_STATUS[row['status']]})
-                tickets[ticket_id].update({'user_name': row['user_name']})
+                tickets[ticket_id].update({'status': Config.GLPI_STATUS[row.get('status')]})
+                tickets[ticket_id].update({'user_name': row.get('user_name')})
     except Exception as e:
         logger.warning('get_tickets() - error getting tickets')
         logger.warning('get_tickets() - error: %s', e)
@@ -278,3 +251,14 @@ def get_tickets(query_string):
 
 if __name__ == '__main__':
     print('glpidb module')
+    phone_for_send = "+7 (911) 111-11-11"
+
+    user_c = get_user_credentials(phone_for_send)
+    print(user_c)
+    from glpiapi import User, GLPI
+    user = User(user_id=user_c.get('id'),
+                token=user_c.get('user_token'),
+                locations_name=user_c.get('locations_name'))
+    glpi = GLPI(url=Config.URL_GLPI, user=user)
+    print(user.__dict__)
+    print(glpi.__dict__)

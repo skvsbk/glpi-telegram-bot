@@ -238,7 +238,7 @@ def get_tickets(query_string):
                 tickets[ticket_id].update({'name': row.get('name')})
                 tickets[ticket_id].update({'content': row.get('content').replace('&lt;p&gt;', '').
                                           replace('&lt;/p&gt;', ' ')})
-                tickets[ticket_id].update({'status': Config.GLPI_STATUS[row.get('status')]})
+                tickets[ticket_id].update({'status': Config.TICKET_STATUS[row.get('status')]})
                 tickets[ticket_id].update({'user_name': row.get('user_name')})
     except Exception as e:
         logger.warning('get_tickets() - error getting tickets')

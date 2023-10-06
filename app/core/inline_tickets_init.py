@@ -1,3 +1,4 @@
+from .serializer import serialize_ticket
 from app.utils import user_dict, tickets_for_close_dict, ticket_for_approve, tickets_for_comment_dict, ticket_for_comment
 from app.utils import glpidb, glpiapi
 from .utilities import delete_inline_keyboard, select_action
@@ -24,19 +25,14 @@ async def status_atwork(chat_id):
         # Select action
         await select_action(chat_id, Config.KBD_ACTION, Config.MSG_SELECT_ACTION, True)
     else:
-        for item in tickets.items():
+        for ticket in tickets.items():
             tickets_for_comment_dict[chat_id] = []
-            msg_item = (f"<b>Заявка № {item[0]}</b>\n"
-                        f"Дата: {item[1]['date']}\n"
-                        f"Статус: {item[1]['status']}\n"
-                        f"Тема: {item[1]['name']}\n"
-                        f"Описание: {item[1]['content']}\n"
-                        f"Исполнитель: {item[1]['user_name']}")
+            msg_item = serialize_ticket(ticket)
             await bot.send_message(chat_id=chat_id,
                                    text=msg_item,
                                    parse_mode='html')
             # Fill the dict for further make inline keyboard and make close ticket
-            tickets_for_comment_dict[chat_id].append(item[0])
+            tickets_for_comment_dict[chat_id].append(ticket[0])
 
         # Select action
         #await select_action(chat_id, Config.KBD_ACTION, Config.MSG_SELECT_ACTION, True)
@@ -57,18 +53,13 @@ async def status_solved(chat_id):
         await select_action(chat_id, Config.KBD_ACTION, Config.MSG_SELECT_ACTION, True)
     else:
         tickets_for_close_dict[chat_id] = []
-        for item in tickets.items():
-            msg_item = (f"<b>Заявка № {item[0]}</b>\n"
-                        f"Дата: {item[1]['date']}\n"
-                        f"Статус: {item[1]['status']}\n"
-                        f"Тема: {item[1]['name']}\n"
-                        f"Описание: {item[1]['content']}\n"
-                        f"Исполнитель: {item[1]['user_name']}")
+        for ticket in tickets.items():
+            msg_item = serialize_ticket(ticket)
             await bot.send_message(chat_id=chat_id,
                                    text=msg_item,
                                    parse_mode='html')
             # Fill the dict for further make inline keyboard and make close ticket
-            tickets_for_close_dict[chat_id].append(item[0])
+            tickets_for_close_dict[chat_id].append(ticket[0])
 
         # Select action fir close tickets
         await select_action(chat_id, Config.KBD_CLOSE_TICKET, Config.MSG_SELECT_ACTION, True)

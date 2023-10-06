@@ -1,5 +1,7 @@
+from .serializer import serialize_project
 from app.utils import project_dict, glpi_dict
 from .utilities import delete_inline_keyboard, select_action
+from app.utils import glpiapi
 from app.config import Config
 from app import bot
 
@@ -25,10 +27,13 @@ async def kaidzen_add_name(chat_id):
 async def kaidzen_my_offers(chat_id):
     # Delete inline keyboard
     await delete_inline_keyboard(chat_id)
-
-    await bot.send_message(chat_id=chat_id,
-                           text="Здесь будут мои предложения",
-                           reply_markup=None)
+    projects = glpiapi.get_user_projects(chat_id)
+    for project in projects:
+        msg_item = serialize_project(project)
+        await bot.send_message(chat_id=chat_id,
+                               text=msg_item,
+                               parse_mode='html')
+    await select_action(chat_id, Config.KBD_ACTION, Config.MSG_SELECT_ACTION, True)
 
 
 async def btn_add_kaidzen(chat_id):

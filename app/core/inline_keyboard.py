@@ -2,7 +2,7 @@ from app.config import Config
 from app import bot
 from .utilities import delete_inline_keyboard, select_action
 from .stop import stop_bot
-from . import inline_common, inline_tickets_init, inline_make_ticket, inline_tickets_handler, inline_kaidzen
+from . import inline_common, inline_tickets_init, inline_make_ticket, inline_tickets_executor, inline_kaidzen
 
 import logging
 
@@ -28,13 +28,13 @@ async def callback_inline_keyboard(call):
                 await inline_tickets_init.role_init(chat_id)
 
             if call.data == 'btn_role_handler':
-                await inline_tickets_handler.role_handler(chat_id)
+                await inline_tickets_executor.role_executor(chat_id)
 
             if call.data == 'btn_handler_solve':
-                await inline_tickets_handler.solve_tickets(chat_id)
+                await inline_tickets_executor.solve_tickets(chat_id)
 
             if call.data.startswith('btn_solve_'):
-                await inline_tickets_handler.btn_solve(chat_id, call.data)
+                await inline_tickets_executor.btn_solve(chat_id, call.data)
 
             if call.data.startswith('btn_close_'):
                 await inline_tickets_init.btn_close(chat_id, call.data)

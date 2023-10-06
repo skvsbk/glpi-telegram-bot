@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timedelta
 from app.config import Config
 from app.utils.glpidb import get_equipment_id, get_location_id
-from app.utils import glpi_dict
+from app.utils import glpi_dict, user_dict
 
 
 import logging
@@ -353,6 +353,21 @@ def leave_ticket_comment(chat_id, ticket_id, comment):
     payload = json.dumps(msg_dict).encode('utf-8')
     url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILFollowup'
     return api_request(headers, url, payload, 'post')
+
+def get_user_projects(chat_id):
+    headers = glpi_dict[chat_id].headers
+    user_id = user_dict[chat_id].id
+    url = f'{Config.URL_GLPI}/User/{user_id}/Project'
+    response = requests.get(url, headers=headers)
+
+    if response:
+        logger.info(f'{url} status_code={response.status_code}')
+        if response.status_code >= 400:
+            logger.warning(f'{url} error = {response.text}')
+            return
+        projects = response.content
+        return json.loads(projects)
+
 
 
 if __name__ == '__main__':

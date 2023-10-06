@@ -1,3 +1,4 @@
+from .serializer import serialize_ticket
 from app.utils import user_dict, tickets_for_solve_dict
 from app.utils import glpidb, glpiapi
 from .utilities import delete_inline_keyboard, select_action
@@ -5,7 +6,7 @@ from app.config import Config
 from app import bot
 
 
-async def role_handler(chat_id):
+async def role_executor(chat_id):
     # Delete inline keyboard
     await delete_inline_keyboard(chat_id)
     await bot.send_message(chat_id=chat_id, text=Config.MSG_HANDLER_ROLE)
@@ -17,18 +18,13 @@ async def role_handler(chat_id):
         await select_action(chat_id, Config.KBD_ACTION, Config.MSG_SELECT_ACTION, True)
     else:
         tickets_for_solve_dict[chat_id] = []
-        for item in tickets.items():
-            msg_item = (f"<b>Заявка № {item[0]}</b>\n"
-                        f"Дата: {item[1]['date']}\n"
-                        f"Статус: {item[1]['status']}\n"
-                        f"Тема: {item[1]['name']}\n"
-                        f"Описание: {item[1]['content']}\n"
-                        f"Инициатор: {item[1]['user_name']}")
+        for ticket in tickets.items():
+            msg_item = serialize_ticket(ticket)
             await bot.send_message(chat_id=chat_id,
                                    text=msg_item,
                                    parse_mode='html')
             # Fill the dict for further make inline keyboard and make solve ticket
-            tickets_for_solve_dict[chat_id].append(item[0])
+            tickets_for_solve_dict[chat_id].append(ticket[0])
 
         # Select action for solve tickets
         await select_action(chat_id, Config.KBD_SOLVE_TICKET, Config.MSG_SELECT_ACTION, True)

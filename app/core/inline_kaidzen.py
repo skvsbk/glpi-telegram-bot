@@ -28,6 +28,8 @@ async def kaidzen_my_offers(chat_id):
     # Delete inline keyboard
     await delete_inline_keyboard(chat_id)
     projects = glpiapi.get_user_projects(chat_id)
+    if projects == []:
+        await bot.send_message(chat_id=chat_id, text=Config.MSG_PROJECT_EMPTY)
     for project in projects:
         msg_item = serialize_project(project)
         await bot.send_message(chat_id=chat_id,

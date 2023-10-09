@@ -9,11 +9,11 @@ from app import bot
 async def role_executor(chat_id):
     # Delete inline keyboard
     await delete_inline_keyboard(chat_id)
-    await bot.send_message(chat_id=chat_id, text=Config.MSG_HANDLER_ROLE)
+    await bot.send_message(chat_id=chat_id, text=Config.MSG_EXECUTOR_ROLE)
     query_string = glpidb.query_tickets_executer_atwork(user_dict[chat_id].id)
     tickets = glpidb.get_tickets(query_string)
     if tickets == {}:
-        await bot.send_message(chat_id=chat_id, text=Config.MSG_HANDLER_EMPTY_ROLE)
+        await bot.send_message(chat_id=chat_id, text=Config.MSG_EXECUTOR_EMPTY)
         # Select action
         await select_action(chat_id, Config.KBD_ACTION, Config.MSG_SELECT_ACTION, True)
     else:

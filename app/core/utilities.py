@@ -1,7 +1,7 @@
 from aiogram import types
 from app.config import Config
 from app import bot
-from app.utils import msgid_dict
+from app.utils import msg_id_dict
 
 
 def make_keyboard_inline(row_width, **buttons):
@@ -14,10 +14,10 @@ def make_keyboard_inline(row_width, **buttons):
 
 
 async def delete_inline_keyboard(chat_id):
-    msgid_dict_lenghth = len(msgid_dict[chat_id])
-    if msgid_dict_lenghth > 0:
-        for i in range(msgid_dict_lenghth):
-            del_msg_id = msgid_dict[chat_id].pop()
+    length = len(msg_id_dict[chat_id])
+    if length > 0:
+        for i in range(length):
+            del_msg_id = msg_id_dict[chat_id].pop()
             await bot.delete_message(chat_id=chat_id, message_id=del_msg_id)
 
 
@@ -28,7 +28,7 @@ async def select_action(chat_id, kbd_action, msg_action, add_msg_id=True):
                                        parse_mode='html',
                                        reply_markup=markup)
     if add_msg_id:
-        msgid_dict[chat_id].append(title_msg.message_id)
+        msg_id_dict[chat_id].append(title_msg.message_id)
 
 
 async def make_category_keyboard(chat_id):

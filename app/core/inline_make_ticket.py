@@ -1,5 +1,4 @@
-from app.utils import user_dict, glpi_dict, ticket_dict
-from app.utils import glpidb
+from app.utils import glpi_dict, ticket_dict
 from .utilities import delete_inline_keyboard, select_action
 from app.config import Config
 from app import bot
@@ -29,14 +28,14 @@ async def theme_room(chat_id):
                            text=Config.MSG_ENTER_NAME_ROOM)
 
 
-async def btn_add(chat_id, message_id):
+async def btn_add_ticket(chat_id, message_id):
     await bot.edit_message_text(chat_id=chat_id,
                                 message_id=message_id,
                                 text=Config.MSG_DEFINE_PROBLEM_PHOTO,
                                 reply_markup=None)
 
 
-async def btn_send(chat_id):
+async def btn_send_ticket(chat_id):
     # Delete message with inline keyboard
     await delete_inline_keyboard(chat_id)
     await bot.send_chat_action(chat_id=chat_id, action='upload_document')
@@ -47,21 +46,23 @@ async def btn_send(chat_id):
     # upload files/photos/videos to glpi
     for filename in ticket_dict[chat_id].attachment:
         # print(filename)
-        doc_id = glpi_dict[chat_id].upload_doc(Config.FILE_PATH, filename)
-        if doc_id is not None:
-            # update table glpi_documents_items
-            glpidb.update_doc_item(doc_id, ticket_id, user_dict[chat_id].id)
+        doc_name = F"Документ звявки {ticket_id}"
+        glpi_dict[chat_id].upload_doc(Config.FILE_PATH, filename, doc_name)
+        # doc_id = glpi_dict[chat_id].upload_doc(Config.FILE_PATH, filename, doc_name)
+        # if doc_id is not None:
+        #     # update table glpi_documents_items
+        #     glpidb.update_doc_item(doc_id, ticket_id, user_dict[chat_id].id, 'Ticket')
     if ticket_id is not None:
         await bot.send_message(chat_id=chat_id,
                                text="Заявка №" + str(ticket_id) + " успешно оформлена",
                                reply_markup=None)
     else:
         await bot.send_message(chat_id=chat_id,
-                               text=Config.MSG_ERROR_SEND,
+                               text=Config.MSG_ERROR_SEND_TICKET,
                                reply_markup=None)
 
 
-async def cancel_or_exit(chat_id, message_id):
+async def cancel_or_exit_ticket(chat_id, message_id):
     if ticket_dict[chat_id].name == '':
         await bot.delete_message(chat_id=chat_id, message_id=message_id)
     else:

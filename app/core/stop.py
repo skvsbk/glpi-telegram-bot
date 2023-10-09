@@ -2,7 +2,8 @@ import os
 from aiogram import types
 from app.config import Config
 from app import bot
-from app.utils import user_dict, glpi_dict, ticket_dict, msgid_dict, tickets_for_solve_dict, tickets_for_close_dict
+from app.utils import user_dict, glpi_dict, ticket_dict, msg_id_dict, tickets_for_solve_dict, tickets_for_close_dict
+from app.utils import project_dict
 from .utilities import delete_inline_keyboard
 
 import logging
@@ -27,7 +28,8 @@ async def stop_bot(message: types.Message):
         user_dict.pop(chat_id)
         glpi_dict.pop(chat_id)
         ticket_dict.pop(chat_id)
-        msgid_dict.pop(chat_id)
+        project_dict.pop(chat_id)
+        msg_id_dict.pop(chat_id)
         tickets_for_solve_dict.pop(chat_id)
         tickets_for_close_dict.pop(chat_id)
 

@@ -75,8 +75,9 @@ class Config:
 
     MSG_LEAVE_COMMENT = "Оставьте комментарий:"
 
-    MSG_HANDLER_ROLE = "Роль: Исполнитель"
-    MSG_HANDLER_EMPTY_ROLE = "Нет заявок, где Вы назначены исполнителем"
+    MSG_EXECUTOR_ROLE = "Роль: Исполнитель"
+    MSG_EXECUTOR_EMPTY = "Нет заявок, где Вы назначены исполнителем"
+    MSG_PROJECT_EMPTY = "У Вас пока нет заявок на улучшение"
 
     MSG_INIT_ROLE = "Роль: Инициатор"
     MSG_INIT_STATUS_1 = "Статус: Нерешенные"

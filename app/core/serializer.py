@@ -14,7 +14,7 @@ def serialize_ticket(ticket):
 def serialize_project(project):
     message = (f"<b>Kaidzen № {project.get('id')}</b>\n"
                f"Дата: {project.get('date')}\n"
-               f"Статус: {Config.PROJECT_STATUS.get(int(project.get('projectstates_id')))}\n" 
+               f"Статус: <b>{Config.PROJECT_STATUS.get(int(project.get('projectstates_id')))}</b>\n" 
                f"Тема: {project.get('name')}\n"
                f"Описание: {project.get('content')}\n")
     return message

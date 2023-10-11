@@ -251,7 +251,7 @@ def get_tickets(query_string):
 
 if __name__ == '__main__':
     print('glpidb module')
-    phone_for_send = "+7 (911) 111-11-11"
+    phone_for_send = "+7 (950) 014-74-77"
 
     user_c = get_user_credentials(phone_for_send)
     print(user_c)

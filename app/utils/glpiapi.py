@@ -114,6 +114,11 @@ class GLPI:
             response = requests.post(self.url+"/Ticket", headers=self.headers, data=payload)
             logger.info(f'{self.url}/Ticket status_code={response.status_code}')
 
+            if response:
+                logger.info(f'{self.url} status_code={response.status_code}')
+                if response.status_code >= 400:
+                    logger.warning(f'{self.url} error = {response.text}')
+
             if response.status_code == 201:
                 self.ticket.id = json.loads(response.text).get('id')
 
@@ -126,7 +131,10 @@ class GLPI:
                                 }
                     payload = json.dumps(msg_dict).encode('utf-8')
                     response = requests.post(url, headers=self.headers, data=payload)
-                    logger.info(f'{url} status_code={response.status_code}')
+                    if response:
+                        logger.info(f'{url} status_code={response.status_code}')
+                        if response.status_code >= 400:
+                            logger.warning(f'{url} error = {response.text}')
 
         return self.ticket.id
 
@@ -145,11 +153,14 @@ class GLPI:
                         }
 
             payload = json.dumps(msg_dict).encode('utf-8')
-            response = requests.post(self.url+"/Project", headers=self.headers, data=payload)
+            url = self.url+"/Project"
+            response = requests.post(url, headers=self.headers, data=payload)
             logger.info(f'{self.url}/Project status_code={response.status_code}')
 
-            if response.status_code == 201:
-                self.project.id = json.loads(response.text).get('id')
+            if response:
+                logger.info(f'{url} status_code={response.status_code}')
+                if response.status_code >= 400:
+                    logger.warning(f'{url} error = {response.text}')
 
         if self.project.id:
             msg_dict = {"input": {"projects_id": self.project.id,
@@ -286,6 +297,12 @@ def refuse_ticket(chat_id, ticket_id, msg_reason):
     # Get id of last solution
     url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILSolution'
     response = requests.get(url, headers=headers)
+
+    if response:
+        logger.info(f'{url} status_code={response.status_code}')
+        if response.status_code >= 400:
+            logger.warning(f'api_request {url} error = {response.text}')
+
     if response.status_code == 200:
         solution_id = json.loads(response.content)[-1]['id']
     else:
@@ -332,6 +349,12 @@ def check_ticket_status(chat_id, ticket_id):
     # Get id of last solution
     url = f'{Config.URL_GLPI}/Ticket/{ticket_id}'
     response = requests.get(url, headers=headers)
+
+    if response:
+        logger.info(f'{url} status_code={response.status_code}')
+        if response.status_code >= 400:
+            logger.warning(f'api_request {url} error = {response.text}')
+
     if response.status_code == 200:
         return json.loads(response.content)['status']
     else:
@@ -365,6 +388,7 @@ def get_user_projects(chat_id):
             return
         projects = response.content
         return json.loads(projects)
+    return []
 
 
 if __name__ == '__main__':

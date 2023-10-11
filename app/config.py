@@ -141,7 +141,8 @@ class Config:
                   "btn_action_exit": "Выход"}
 
     KBD_THEME = {"btn_theme_room": BTN_THEME_ROOM,
-                 "btn_theme_equipment": BTN_THEME_EQIPMENT}
+                 "btn_theme_equipment": BTN_THEME_EQIPMENT,
+                 "btn_action_exit": "Выход"}
 
     KBD_ADD_SEND_CANCEL_TICKET = {"btn_add_ticket": "Дополнить",
                                   "btn_send_ticket": "Отправить в ОГИ",

@@ -116,9 +116,6 @@ async def callback_inline_keyboard(call):
             if call.data.startswith('btn_urgency_'):
                 await inline_make_ticket.btn_urgency(chat_id, call.data)
 
-            # else:
-            #     pass
-
     except Exception as err:
         logger.warning('callback_inline(%s) - some errors: %s and ticket was not created',
                        str(call.message.chat.id), repr(err))

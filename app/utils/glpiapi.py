@@ -59,9 +59,10 @@ class GLPI:
             "Authorization": f"user_token {self.user.token}"
         }
         response = requests.get(self.url+"/initSession", headers=headers)
-        if response.status_code == 401 or response.status_code == 400:
+        if response.status_code >= 400:
             self.session = None
             self.header = None
+            logger.warning('InitSession error: %s', response.text)
         else:
             self.session = json.loads(response.text).get('session_token')
             self.headers = {"Content-Type": "application/json",
@@ -164,6 +165,12 @@ class GLPI:
 
         return self.project.id
 
+    def _get_id_and_type(self):
+        if self.ticket is not None:
+            return self.ticket.id, "Ticket"
+        if self.project is not None:
+            return self.project.id, "Project"
+
     def upload_doc(self, file_path, filename, doc_name):
         doc_id = None
         headers = {'Session-Token': self.session}
@@ -178,12 +185,8 @@ class GLPI:
 
         # Link doc with Project
         if doc_id is not None:
-            if self.ticket is not None:
-                item_id = self.ticket.id
-                item_type = "Ticket"
-            if self.project is not None:
-                item_id = self.project.id
-                item_type = "Project"
+            item_id = self._get_id_and_type()[0]
+            item_type = self._get_id_and_type()[1]
 
             msg_dict = {"input": {"documents_id": doc_id,
                                   "items_id": item_id,
@@ -213,22 +216,22 @@ def api_request(headers: dict, url: str, payload, request_type: str):
     if response:
         logger.info(f'{url} status_code={response.status_code}')
         if response.status_code >= 400:
-            logger.warning(f'{url} error = {response.text}')
+            logger.warning(f'api_request {url} error = {response.text}')
 
     return response
 
 
 def solve_ticket(chat_id, ticket_id):
     headers = glpi_dict[chat_id].headers
-    msg_dict = {"input": {"items_id": ticket_id,
-                          "content": Config.MSG_SOLUTION,
-                          "users_id": glpi_dict[chat_id].user.id,
-                          "solutiontypes_id": 0,
-                          "itemtype": "Ticket",
-                          "status": 5,
-                          }
-                }
-    payload = json.dumps(msg_dict).encode('utf-8')
+    payload = {"input": {"items_id": ticket_id,
+                         "content": Config.MSG_SOLUTION,
+                         "users_id": glpi_dict[chat_id].user.id,
+                         "solutiontypes_id": 0,
+                         "itemtype": "Ticket",
+                         "status": 5,
+                         }
+               }
+
     api_request(headers, f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILSolution', payload, 'post')
 
 
@@ -246,25 +249,23 @@ def approve_ticket(chat_id, ticket_id):
     request_list = []
 
     # POST comment approval
-    msg_dict = {"input": {"itemtype": "Ticket",
-                          "items_id": ticket_id,
-                          "users_id": glpi_dict[chat_id].user.id,
-                          "content": Config.MSG_APPROVAL,
-                          }
-                }
-    payload = json.dumps(msg_dict).encode('utf-8')
+    payload = {"input": {"itemtype": "Ticket",
+                         "items_id": ticket_id,
+                         "users_id": glpi_dict[chat_id].user.id,
+                         "content": Config.MSG_APPROVAL,
+                         }
+               }
     url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILFollowup'
     request_list.append((url, payload, 'post'))
 
     # PUT to last solution
-    msg_dict = {"input": {"items_id": ticket_id,
-                          "users_id_approval": glpi_dict[chat_id].user.id,
-                          "solutiontypes_id": 1,
-                          "itemtype": "Ticket",
-                          "status": 3
-                          }
-                }
-    payload = json.dumps(msg_dict).encode('utf-8')
+    payload = {"input": {"items_id": ticket_id,
+                         "users_id_approval": glpi_dict[chat_id].user.id,
+                         "solutiontypes_id": 1,
+                         "itemtype": "Ticket",
+                         "status": 3
+                         }
+               }
     url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILSolution/{solution_id}'
     request_list.append((url, payload, 'put'))
 
@@ -293,26 +294,24 @@ def refuse_ticket(chat_id, ticket_id, msg_reason):
     request_list = []
 
     # POST comment approval
-    msg_dict = {"input": {"itemtype": "Ticket",
-                          "items_id": ticket_id,
-                          "users_id": glpi_dict[chat_id].user.id,
-                          "content": msg_reason,
-                          }
-                }
-    payload = json.dumps(msg_dict).encode('utf-8')
+    payload = {"input": {"itemtype": "Ticket",
+                         "items_id": ticket_id,
+                         "users_id": glpi_dict[chat_id].user.id,
+                         "content": msg_reason,
+                         }
+               }
     url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILFollowup'
     request_list.append((url, payload, 'post'))
 
     # PUT to last solution
-    msg_dict = {"input": {"items_id": ticket_id,
-                          "users_id": 0,
-                          "users_id_approval": glpi_dict[chat_id].user.id,
-                          "solutiontypes_id": 0,
-                          "itemtype": "Ticket",
-                          "status": 4,
-                          }
-                }
-    payload = json.dumps(msg_dict).encode('utf-8')
+    payload = {"input": {"items_id": ticket_id,
+                         "users_id": 0,
+                         "users_id_approval": glpi_dict[chat_id].user.id,
+                         "solutiontypes_id": 0,
+                         "itemtype": "Ticket",
+                         "status": 4,
+                         }
+               }
     url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILSolution/{solution_id}'
     request_list.append((url, payload, 'put'))
 
@@ -343,13 +342,12 @@ def leave_ticket_comment(chat_id, ticket_id, comment):
     headers = glpi_dict[chat_id].headers
 
     # POST comment
-    msg_dict = {"input": {"itemtype": "Ticket",
-                          "items_id": ticket_id,
-                          "users_id": glpi_dict[chat_id].user.id,
-                          "content": comment,
-                          }
-                }
-    payload = json.dumps(msg_dict).encode('utf-8')
+    payload = {"input": {"itemtype": "Ticket",
+                         "items_id": ticket_id,
+                         "users_id": glpi_dict[chat_id].user.id,
+                         "content": comment,
+                         }
+               }
     url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILFollowup'
     return api_request(headers, url, payload, 'post')
 

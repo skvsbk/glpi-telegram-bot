@@ -111,25 +111,25 @@ class GLPI:
                     msg_dict["input"].update({"locations_id": equipment_ids['locations_id']})
 
             payload = json.dumps(msg_dict).encode('utf-8')
-            response = requests.post(self.url+"/Ticket", headers=self.headers, data=payload)
-            logger.info(f'{self.url}/Ticket status_code={response.status_code}')
+            url = self.url+"/Ticket"
+            response = requests.post(url, headers=self.headers, data=payload)
 
             if response:
-                logger.info(f'{self.url} status_code={response.status_code}')
+                logger.info(f'{url} status_code={response.status_code}')
                 if response.status_code >= 400:
-                    logger.warning(f'{self.url} error = {response.text}')
+                    logger.warning(f'{url} error = {response.text}')
 
             if response.status_code == 201:
                 self.ticket.id = json.loads(response.text).get('id')
 
                 # Assign equipment with ticket
                 if self.ticket.name.startswith(Config.BTN_THEME_EQIPMENT) and equipment_ids is not None:
-                    url = f'{self.url}/Ticket/{self.ticket.id}/Item_Ticket/'
                     msg_dict = {"input": {"tickets_id": self.ticket.id,
                                           "items_id": equipment_ids['id'],
                                           "itemtype": "Peripheral"}
                                 }
                     payload = json.dumps(msg_dict).encode('utf-8')
+                    url = f'{self.url}/Ticket/{self.ticket.id}/Item_Ticket/'
                     response = requests.post(url, headers=self.headers, data=payload)
                     if response:
                         logger.info(f'{url} status_code={response.status_code}')
@@ -162,6 +162,9 @@ class GLPI:
                 if response.status_code >= 400:
                     logger.warning(f'{url} error = {response.text}')
 
+            if response.status_code == 201:
+                self.project.id = json.loads(response.text).get('id')
+
         if self.project.id:
             msg_dict = {"input": {"projects_id": self.project.id,
                                   "itemtype": "User",
@@ -170,9 +173,13 @@ class GLPI:
                         }
 
             payload = json.dumps(msg_dict).encode('utf-8')
-            response = requests.post(f"{self.url}/Project/{self.project.id}/ProjectTeam",
-                                     headers=self.headers, data=payload)
-            logger.info(f'{self.url}/Project{self.project.id}/ProjectTeam status_code={response.status_code}')
+            url = f"{self.url}/Project/{self.project.id}/ProjectTeam"
+            response = requests.post(url, headers=self.headers, data=payload)
+
+            if response:
+                logger.info(f'{url} status_code={response.status_code}')
+                if response.status_code >= 400:
+                    logger.warning(f'{url} error = {response.text}')
 
         return self.project.id
 
@@ -189,7 +196,12 @@ class GLPI:
                                     ' (tb)", "_filename": ["' + filename + '"]}}', 'application/json'),
                  'filename[0]': (filename, open(file_path + '/' + filename, "rb")), }
 
-        response = requests.post(self.url+"/Document", headers=headers, files=files)
+        url = self.url+"/Document"
+        response = requests.post(url, headers=headers, files=files)
+        if response:
+            logger.info(f'{url} status_code={response.status_code}')
+            if response.status_code >= 400:
+                logger.warning(f'{url} error = {response.text}')
 
         if response.status_code in range(200, 300):
             doc_id = response.json().get('id')
@@ -207,11 +219,13 @@ class GLPI:
                                   }
                         }
             payload = json.dumps(msg_dict).encode('utf-8')
-            response = requests.post(f"{self.url}/Document/{doc_id}/Document_Item", headers=self.headers, data=payload)
-        if response:
-            logger.info(f'{self.url} status_code={response.status_code}')
-            if response.status_code >= 400:
-                logger.warning(f'{self.url} error = {response.text}')
+            url = f"{self.url}/Document/{doc_id}/Document_Item"
+            response = requests.post(url, headers=self.headers, data=payload)
+
+            if response:
+                logger.info(f'{url} status_code={response.status_code}')
+                if response.status_code >= 400:
+                    logger.warning(f'{url} error = {response.text}')
 
 
 def api_request(headers: dict, url: str, payload, request_type: str):

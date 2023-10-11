@@ -21,21 +21,24 @@ async def stop_bot(message: types.Message):
         pass
     await bot.send_message(chat_id=chat_id,
                            text=Config.MSG_GOODBY)
+
+    dicts_for_clear = [user_dict,
+                       glpi_dict,
+                       ticket_dict,
+                       project_dict,
+                       msg_id_dict,
+                       tickets_for_solve_dict,
+                       tickets_for_close_dict
+                       ]
     try:
         for filename in ticket_dict[chat_id].attachment:
             if os.path.exists(Config.FILE_PATH + '/' + filename):
                 os.remove(Config.FILE_PATH + '/' + filename)
-        user_dict.pop(chat_id)
-        glpi_dict.pop(chat_id)
-        ticket_dict.pop(chat_id)
-        project_dict.pop(chat_id)
-        msg_id_dict.pop(chat_id)
-        tickets_for_solve_dict.pop(chat_id)
-        tickets_for_close_dict.pop(chat_id)
+        for item in dicts_for_clear:
+            if item.get(chat_id):
+                item.pop(chat_id)
 
     except:
         logger.warning('execute_on_exit(%s) - error cleaning dictionaries', str(chat_id))
-        pass
     finally:
         logger.info('the function execute_on_exit(message) is done for the id %s', str(chat_id))
-        pass

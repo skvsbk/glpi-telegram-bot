@@ -70,7 +70,7 @@ async def btn_close(chat_id, btn_name):
     ticket_id = btn_name.replace('btn_close_', '')
     ticket_for_approve[chat_id] = ticket_id
     # ticket_for_comment[chat_id] = ''
-    # await select_action(chat_id, Config.KBD_APPROVE_REJECT, Config.MSG_SELECT_ACTION, True)
+    await select_action(chat_id, Config.KBD_APPROVE_REJECT, Config.MSG_SELECT_ACTION, True)
 
 
 async def btn_comment(chat_id, btn_name):

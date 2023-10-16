@@ -47,11 +47,10 @@ async def btn_send_ticket(chat_id):
     for filename in ticket_dict[chat_id].attachment:
         # print(filename)
         doc_name = F"Документ звявки {ticket_id}"
-        glpi_dict[chat_id].upload_doc(Config.FILE_PATH, filename, doc_name)
-        # doc_id = glpi_dict[chat_id].upload_doc(Config.FILE_PATH, filename, doc_name)
-        # if doc_id is not None:
-        #     # update table glpi_documents_items
-        #     glpidb.update_doc_item(doc_id, ticket_id, user_dict[chat_id].id, 'Ticket')
+        doc_id = glpi_dict[chat_id].upload_doc(Config.FILE_PATH, filename, doc_name)
+        if doc_id is not None:
+            glpi_dict[chat_id].link_loaded_doc_to_item(doc_id)
+
     if ticket_id is not None:
         await bot.send_message(chat_id=chat_id,
                                text="Заявка №" + str(ticket_id) + " успешно оформлена",

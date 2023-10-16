@@ -28,7 +28,7 @@ async def kaidzen_my_offers(chat_id):
     # Delete inline keyboard
     await delete_inline_keyboard(chat_id)
     projects = glpiapi.get_user_projects(chat_id)
-    if projects == []:
+    if projects:
         await bot.send_message(chat_id=chat_id, text=Config.MSG_PROJECT_EMPTY)
     for project in projects:
         msg_item = serialize_project(project)
@@ -58,7 +58,9 @@ async def btn_send_kaidzen(chat_id):
     # upload files/photos/videos to glpi
     for filename in project_dict[chat_id].attachment:
         doc_name = F"Документ проекта {project_id}"
-        glpi_dict[chat_id].upload_doc(Config.FILE_PATH, filename, doc_name)
+        doc_id = glpi_dict[chat_id].upload_doc(Config.FILE_PATH, filename, doc_name)
+        if doc_id is not None:
+            glpi_dict[chat_id].link_loaded_doc_to_item(doc_id)
 
     if project_id is not None:
         await bot.send_message(chat_id=chat_id,

@@ -33,8 +33,8 @@ class Ticket:
         self.attachment = []
         self.isnew = False
 
-    def print_ticket(self):
-        print(f't_id: {self.id}; t_name: {self.name}; t_content: {self.content}; t_attachment: {self.attachment}')
+    def __str__(self):
+        return f't_id: {self.id}; t_name: {self.name}; t_content: {self.content}; t_attachment: {self.attachment}'
 
 
 class Project:
@@ -147,7 +147,8 @@ class GLPI:
         if response.status_code >= 400 or len(response.json()) == 0:
             return None
         else:
-            return {'equipment_id': response.json()[0].get('id'), 'locations_id': response.json()[0].get('locations_id')}
+            return {'equipment_id': response.json()[0].get('id'),
+                    'locations_id': response.json()[0].get('locations_id')}
 
     def _create_assign_equipment(self, equipment_id):
         url = f'{self.url}/Ticket/{self.ticket.id}/Item_Ticket/'
@@ -162,36 +163,31 @@ class GLPI:
             if self.project.content == '':
                 self.project.content = self.project.name
 
-            msg_dict = {"input": {"name": self.project.name,
-                                  "content": self.project.content,
-                                  "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                  "users_id": self.user.id,
-                                  "priority": 3,
-                                  "projectstates_id": 0
-                                  }
-                        }
-
-            payload = json.dumps(msg_dict).encode('utf-8')
+            payload = {"input": {"name": self.project.name,
+                                 "content": self.project.content,
+                                 "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                 "users_id": self.user.id,
+                                 "priority": 3,
+                                 "projectstates_id": 0
+                                 }
+                       }
             url = self.url+"/Project"
-            response = requests.post(url, headers=self.headers, data=payload)
-            logger.info(f'{self.url}/Project status_code={response.status_code}')
+            response = GlpiApiRequest.request(headers=self.headers, url=url, payload=payload, request_type='post')
 
-            # if response:
-            logger.info(f'{url} status_code={response.status_code}')
             if response.status_code >= 400:
-                logger.warning(f'{url} error = {response.text}')
+                return None
+
+            self.project.id = response.json().get('id')
 
         if self.project.id:
-            msg_dict = {"input": {"projects_id": self.project.id,
-                                  "itemtype": "User",
-                                  "items_id": Config.PROJECT_MANAGER_ID
-                                  }
-                        }
+            payload = {"input": {"projects_id": self.project.id,
+                                 "itemtype": "User",
+                                 "items_id": Config.PROJECT_MANAGER_ID
+                                 }
+                       }
 
-            payload = json.dumps(msg_dict).encode('utf-8')
-            response = requests.post(f"{self.url}/Project/{self.project.id}/ProjectTeam",
-                                     headers=self.headers, data=payload)
-            logger.info(f'{self.url}/Project{self.project.id}/ProjectTeam status_code={response.status_code}')
+            url = f"{self.url}/Project/{self.project.id}/ProjectTeam"
+            GlpiApiRequest.request(headers=self.headers, url=url, payload=payload, request_type='post')
 
         return self.project.id
 
@@ -202,7 +198,7 @@ class GLPI:
             return self.project.id, "Project"
 
     def upload_doc(self, file_path, filename, doc_name):
-        doc_id = None
+        document_id = None
         headers = {'Session-Token': self.session}
         files = {'uploadManifest': (None, '{"input": {"name": "' + doc_name +
                                     ' (tb)", "_filename": ["' + filename + '"]}}', 'application/json'),
@@ -211,26 +207,24 @@ class GLPI:
         response = requests.post(self.url+"/Document", headers=headers, files=files)
 
         if response.status_code in range(200, 300):
-            doc_id = response.json().get('id')
+            document_id = response.json().get('id')
 
-        # Link doc with Project
-        if doc_id is not None:
-            item_id = self._get_id_and_type()[0]
-            item_type = self._get_id_and_type()[1]
+        return document_id
 
-            msg_dict = {"input": {"documents_id": doc_id,
-                                  "items_id": item_id,
-                                  "itemtype": item_type,
-                                  "users_id": self.user.id,
-                                  "is_recursive": 1,
-                                  }
-                        }
-            payload = json.dumps(msg_dict).encode('utf-8')
-            response = requests.post(f"{self.url}/Document/{doc_id}/Document_Item", headers=self.headers, data=payload)
-        # if response:
-        logger.info(f'{self.url} status_code={response.status_code}')
-        if response.status_code >= 400:
-            logger.warning(f'{self.url} error = {response.text}')
+    def link_loaded_doc_to_item(self, document_id):
+        item_id = self._get_id_and_type()[0]
+        item_type = self._get_id_and_type()[1]
+
+        payload = {"input": {"documents_id": document_id,
+                             "items_id": item_id,
+                             "itemtype": item_type,
+                             "users_id": self.user.id,
+                             "is_recursive": 1,
+                             }
+                   }
+        url = f"{self.url}/Document/{document_id}/Document_Item"
+        response = GlpiApiRequest.request(url=url, headers=self.headers, payload=payload, request_type='post')
+        return response.status_code
 
 
 class GlpiApiRequest:

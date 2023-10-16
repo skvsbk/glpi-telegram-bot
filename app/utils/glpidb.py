@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel('INFO')
 
 
-def db_connetion():
+def db_connection():
     # DB credentials
     db_host = Config.DB_HOST
     db_name = Config.DB_NAME
@@ -24,31 +24,27 @@ def db_connetion():
 
 
 def get_user_credentials(mobile):
-    """
-    :param mobile: search creteria
-    :return: dictionary with user params
-    """
-    connection = db_connetion()
+    connection = db_connection()
     user_creds = dict()
     try:
         with connection.cursor() as cursor:
             # """
             # SELECT glpi_users.id, api_token, firstname FROM glpi_users
-            # WHERE mobile = "+7 (950) 014-93-24" AND is_active=1
+            # WHERE mobile = "+7 (111) 111-11-11" AND is_active=1
             # """
             # query = f'SELECT glpi_users.id, api_token, firstname FROM glpi_users ' \
             #         f'WHERE mobile = "{mobile}" AND is_active=1'
             #
             # SELECT glpi_users.id, api_token, firstname, glpi_locations.name AS locations_name FROM glpi_users
             # JOIN glpi_locations ON glpi_users.locations_id = glpi_locations.id
-            # WHERE mobile = "+7 (911) 009-65-76" AND is_active=1
+            # WHERE mobile = "+7 (111) 111-11-11" AND is_active=1
 
             """
             SELECT glpi_users.id, api_token, firstname, glpi_locations.name AS locations_name,
             glpi_plugin_fields_usertelegramids.telegramidfield FROM glpi_users
             JOIN glpi_locations ON glpi_users.locations_id = glpi_locations.id
             LEFT JOIN glpi_plugin_fields_usertelegramids ON glpi_plugin_fields_usertelegramids.items_id = glpi_users.id
-            WHERE mobile = "+7 (921) 855-13-15" AND is_active=1
+            WHERE mobile = "+7 (111) 111-11-11" AND is_active=1
             """
 
             query = (f'SELECT glpi_users.id, api_token, firstname, glpi_locations.name AS locations_name, '
@@ -76,8 +72,8 @@ def get_user_credentials(mobile):
 
 
 def put_telegramid_for_user(user_id, telegramid):
-
-    connection = db_connetion()
+    result = False
+    connection = db_connection()
     try:
         with connection.cursor() as cursor:
             # Check item with user_id in glpi_plugin_fields_usertelegramids
@@ -101,6 +97,7 @@ def put_telegramid_for_user(user_id, telegramid):
                          f'WHERE items_id = {user_id}')
                 cursor.execute(query)
                 connection.commit()
+            result = True
 
     except:
         logger.warning('put_telegramid_for_user() - error set TelegranID for user_id = %s', str(user_id))
@@ -108,46 +105,7 @@ def put_telegramid_for_user(user_id, telegramid):
         logger.info('the function put_telegramid_for_user() is done for user_id %s', str(user_id))
         connection.close()
 
-
-def get_location_id(location_name):
-    connection = db_connetion()
-    location_id = None
-    try:
-        with connection.cursor() as cursor:
-            """
-            SELECT * FROM glpi_locations WHERE name LIKE '%1.011%'
-            """
-            query = f"SELECT id FROM glpi_locations WHERE name LIKE '%{location_name}%'"
-            cursor.execute(query)
-            for row in cursor:
-                location_id = row.get('id')
-    except:
-        logger.warning('get_location_id() - error getting location_id %s', location_name)
-    finally:
-        logger.info('the get_location_id() is done for location_id %s', location_name)
-        connection.close()
-    return location_id
-
-
-def get_equipment_id(equipment_name):
-    connection = db_connetion()
-    equipment_id = None
-    try:
-        with connection.cursor() as cursor:
-            """
-            SELECT id, locations_id FROM glpi_peripherals WHERE name LIKE '%Р-1.038%'
-            """
-            query = f"SELECT id, locations_id FROM glpi_peripherals WHERE name LIKE '%{equipment_name}%'"
-            cursor.execute(query)
-            for row in cursor:
-                equipment_id = {'id': row.get('id'),
-                                'locations_id': row.get('locations_id')}
-    except:
-        logger.warning('get_equipment_id() - error getting equipment_id %s', equipment_name)
-    finally:
-        logger.info('the get_equipment_id() is done for equipment_id %s', equipment_name)
-        connection.close()
-    return equipment_id
+    return result
 
 
 def query_tickets_init_atwork(user_id):
@@ -159,7 +117,7 @@ def query_tickets_init_atwork(user_id):
     JOIN glpi_users U1 ON U1.id = TU1.users_id
     WHERE T1.id IN (SELECT glpi_tickets_users.tickets_id FROM glpi_tickets_users
     WHERE glpi_tickets_users.users_id = 149
-    AND glpi_tickets_users.type = 1) AND T1.status IN (1, 2, 3, 4) AND T1.is_deleted = 0 AND TU1.type = 2
+    AND glpi_tickets_users.type = 1) AND T1.status IN (1, 2, 3, 4) AND T1.is_deleted = 0 AND TU1.type = 1
     """
     return (f'SELECT T1.id, T1.date, T1.name, T1.content, T1.status, '
             f'CONCAT(U1.realname, " ", U1.firstname) AS user_name '
@@ -172,7 +130,7 @@ def query_tickets_init_atwork(user_id):
             f'WHERE glpi_tickets_users.users_id = {user_id} '
             f'AND glpi_tickets_users.type = 1) '
             f'AND T1.status IN (1, 2, 3, 4) '
-            f'AND T1.is_deleted = 0 AND TU1.type = 2')
+            f'AND T1.is_deleted = 0 AND TU1.type = 1')
 
 
 def query_tickets_executer_atwork(user_id):
@@ -226,7 +184,7 @@ def query_solved_tickets(user_id):
 
 
 def get_tickets(query_string):
-    connection = db_connetion()
+    connection = db_connection()
     tickets = {}
     try:
         with connection.cursor() as cursor:
@@ -251,14 +209,3 @@ def get_tickets(query_string):
 
 if __name__ == '__main__':
     print('glpidb module')
-    phone_for_send = "+7 (950) 014-74-77"
-
-    user_c = get_user_credentials(phone_for_send)
-    print(user_c)
-    from glpiapi import User, GLPI
-    user = User(user_id=user_c.get('id'),
-                token=user_c.get('user_token'),
-                locations_name=user_c.get('locations_name'))
-    glpi = GLPI(url=Config.URL_GLPI, user=user)
-    print(user.__dict__)
-    print(glpi.__dict__)

@@ -190,7 +190,7 @@ class Config:
 
     # Create ticket by API
     # TelegramBot = 8
-    REQUESTTYPE_ID = "8"
+    REQUESTTYPE_ID = 8
     # Incident = 1
     TYPE = "1"
 

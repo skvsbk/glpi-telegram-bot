@@ -85,6 +85,7 @@ class GLPI:
             requests.get(self.url+"/killSession", headers=headers)
 
     def create_ticket(self):
+
         if self.ticket.id:
             return None
 
@@ -179,6 +180,9 @@ class GLPI:
 
             self.project.id = response.json().get('id')
 
+            if response.status_code == 201:
+                self.project.id = json.loads(response.text).get('id')
+
         if self.project.id:
             payload = {"input": {"projects_id": self.project.id,
                                  "itemtype": "User",
@@ -204,7 +208,12 @@ class GLPI:
                                     ' (tb)", "_filename": ["' + filename + '"]}}', 'application/json'),
                  'filename[0]': (filename, open(file_path + '/' + filename, "rb")), }
 
-        response = requests.post(self.url+"/Document", headers=headers, files=files)
+        url = self.url+"/Document"
+        response = requests.post(url, headers=headers, files=files)
+        if response:
+            logger.info(f'{url} status_code={response.status_code}')
+            if response.status_code >= 400:
+                logger.warning(f'{url} error = {response.text}')
 
         if response.status_code in range(200, 300):
             document_id = response.json().get('id')
@@ -427,11 +436,3 @@ def get_user_projects(chat_id):
 
 if __name__ == '__main__':
     print('glpiapi module')
-
-    # equipment_name = 'P-1.038'
-    # user_creds = get_user_credentials('+7 (111) 111-11-11')
-    # user = User(user_id=user_creds.get('id'),
-    #             token=user_creds.get('user_token'),
-    #             locations_name=user_creds.get('locations_name'))
-    # glpi = GLPI(url='https://engineering.acticomp.ru/apirest.php', user_obj=user)
-    # location_id = glpi._get_equipment_id(equipment_name)

@@ -38,3 +38,10 @@ async def btn_understand(chat_id):
     await delete_inline_keyboard(chat_id)
     # Select category keyboard
     await make_category_keyboard(chat_id)
+
+
+async def btn_backward(chat_id):
+    # Delete inline keyboard
+    await delete_inline_keyboard(chat_id)
+    # Select action
+    await select_action(chat_id, Config.KBD_ACTION, Config.MSG_SELECT_ACTION, True)

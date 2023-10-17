@@ -2,7 +2,7 @@ import requests
 import json
 from datetime import datetime, timedelta
 from app.config import Config
-from app.utils.glpidb import get_equipment_id, get_location_id
+# from app.utils.glpidb import get_equipment_id, get_location_id, get_user_credentials
 from app.utils import glpi_dict, user_dict
 
 
@@ -33,8 +33,8 @@ class Ticket:
         self.attachment = []
         self.isnew = False
 
-    def print_ticket(self):
-        print(f't_id: {self.id}; t_name: {self.name}; t_content: {self.content}; t_attachment: {self.attachment}')
+    def __str__(self):
+        return f't_id: {self.id}; t_name: {self.name}; t_content: {self.content}; t_attachment: {self.attachment}'
 
 
 class Project:
@@ -47,28 +47,34 @@ class Project:
 
 
 class GLPI:
-    def __init__(self, url=None, user=None, ticket=None, project=None):
+    def __init__(self, url=None, user_obj=None, ticket_obj=None, project_obj=None):
         self.url = url
-        self.user = user
-        self.ticket = ticket
-        self.project = project
+        self.user = user_obj
+        self.ticket = ticket_obj
+        self.project = project_obj
 
-        # User session initialization
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"user_token {self.user.token}"
-        }
-        response = requests.get(self.url+"/initSession", headers=headers)
-        if response.status_code >= 400:
-            self.session = None
+        self.session = self._get_user_session()
+        if self.session is None:
             self.header = None
-            logger.warning('InitSession error: %s', response.text)
         else:
-            self.session = json.loads(response.text).get('session_token')
             self.headers = {"Content-Type": "application/json",
                             "Authorization": "user_token " + self.user.token,
                             "Session-Token": self.session
                             }
+
+    def _get_user_session(self):
+        # User session initialization
+        headers = {"Content-Type": "application/json",
+                   "Authorization": f"user_token {self.user.token}"
+                   }
+        url = self.url + "/initSession"
+        response = requests.get(url, headers=headers)
+
+        logger.info(f'{url} status_code={response.status_code}')
+        if response.status_code >= 400:
+            logger.warning(f'{url} error = {response.text}')
+            return None
+        return response.json().get('session_token')
 
     def __del__(self):
         if self.session:
@@ -79,107 +85,109 @@ class GLPI:
             requests.get(self.url+"/killSession", headers=headers)
 
     def create_ticket(self):
-        if self.ticket.id is None:
-            if self.ticket.content == '':
-                self.ticket.content = self.ticket.name
+        if self.ticket.id:
+            return None
 
-            itilcategories_id = self.ticket.category_id
-            urgency_id = self.ticket.urgency_id
+        if self.ticket.content == '':
+            self.ticket.content = self.ticket.name
 
-            time_to_resolve = str(datetime.today().date() + timedelta(5)) + ' 12:00:00'
+        time_to_resolve = str(datetime.today().date() + timedelta(5)) + ' 12:00:00'
+        search_name = self.ticket.name.split()[1]
+        theme = self.ticket.name.split()[0]
+        equipment_or_location = self._get_equipment_or_location(search_name, theme)
+        payload = {"input": {"name": self.ticket.name,
+                             "content": self.ticket.content,
+                             "time_to_resolve": time_to_resolve,
+                             "itilcategories_id": self.ticket.category_id,
+                             "type": Config.TYPE,
+                             "requesttypes_id": Config.REQUESTTYPE_ID,
+                             "urgency": self.ticket.urgency_id,
+                             "locations_id": equipment_or_location.get('locations_id')
+                             }
+                   }
 
-            msg_dict = {"input": {"name": self.ticket.name,
-                                  "content": self.ticket.content,
-                                  "time_to_resolve": time_to_resolve,
-                                  "itilcategories_id": itilcategories_id,
-                                  "type": Config.TYPE,
-                                  "requesttypes_id": Config.REQUESTTYPE_ID,
-                                  "urgency": urgency_id}
-                        }
+        url = self.url+"/Ticket"
+        response = GlpiApiRequest.request(headers=self.headers, url=url, payload=payload, request_type='post')
 
-            equipment_ids = None
+        if response.status_code >= 400:
+            return None
 
-            if self.ticket.name.startswith(Config.BTN_THEME_ROOM):
-                location_name = self.ticket.name.split()[1]
-                location_id = get_location_id(location_name)
-                if location_id is not None:
-                    msg_dict["input"].update({"locations_id": location_id})
-            if self.ticket.name.startswith(Config.BTN_THEME_EQIPMENT):
-                equipment_name = self.ticket.name.split()[1]
-                equipment_ids = get_equipment_id(equipment_name)
-                if equipment_ids is not None and equipment_ids['locations_id']:
-                    msg_dict["input"].update({"locations_id": equipment_ids['locations_id']})
+        self.ticket.id = response.json().get('id')
 
-            payload = json.dumps(msg_dict).encode('utf-8')
-            url = self.url+"/Ticket"
-            response = requests.post(url, headers=self.headers, data=payload)
-
-            if response:
-                logger.info(f'{url} status_code={response.status_code}')
-                if response.status_code >= 400:
-                    logger.warning(f'{url} error = {response.text}')
-
-            if response.status_code == 201:
-                self.ticket.id = json.loads(response.text).get('id')
-
-                # Assign equipment with ticket
-                if self.ticket.name.startswith(Config.BTN_THEME_EQIPMENT) and equipment_ids is not None:
-                    msg_dict = {"input": {"tickets_id": self.ticket.id,
-                                          "items_id": equipment_ids['id'],
-                                          "itemtype": "Peripheral"}
-                                }
-                    payload = json.dumps(msg_dict).encode('utf-8')
-                    url = f'{self.url}/Ticket/{self.ticket.id}/Item_Ticket/'
-                    response = requests.post(url, headers=self.headers, data=payload)
-                    if response:
-                        logger.info(f'{url} status_code={response.status_code}')
-                        if response.status_code >= 400:
-                            logger.warning(f'{url} error = {response.text}')
+        # Assign equipment with ticket
+        equipment_id = equipment_or_location.get('equipment_id')
+        if theme == Config.BTN_THEME_EQIPMENT and equipment_id is not None:
+            self._create_assign_equipment(equipment_id)
 
         return self.ticket.id
+
+    def _get_equipment_or_location(self, search_name, theme):
+        equipment_or_location = {'equipment_id': None, 'locations_id': 0}
+        if theme == Config.BTN_THEME_ROOM:
+            location_id = self._get_location_id(search_name)
+            if location_id is not None:
+                return {'equipment_id': None, 'locations_id': location_id}
+        if theme == Config.BTN_THEME_EQIPMENT:
+            equipment = self._get_equipment_id(search_name)
+            if equipment is not None:
+                return {'equipment_id': equipment.get('equipment_id'), 'locations_id': equipment.get('locations_id')}
+        return equipment_or_location
+
+    def _get_location_id(self, loc_name):
+        url = f'{self.url}/Location/?searchText[name]={loc_name}'
+        response = GlpiApiRequest.request(headers=self.headers, url=url, payload=None, request_type='get')
+        if response.status_code >= 400 or len(response.json()) == 0:
+            return None
+        else:
+            return response.json()[0]['id']
+
+    def _get_equipment_id(self, eq_name):
+        url = f'{self.url}/Peripheral/?searchText[name]={eq_name}'
+        response = GlpiApiRequest.request(headers=self.headers, url=url, payload=None, request_type='get')
+        if response.status_code >= 400 or len(response.json()) == 0:
+            return None
+        else:
+            return {'equipment_id': response.json()[0].get('id'),
+                    'locations_id': response.json()[0].get('locations_id')}
+
+    def _create_assign_equipment(self, equipment_id):
+        url = f'{self.url}/Ticket/{self.ticket.id}/Item_Ticket/'
+        payload = {"input": {"tickets_id": self.ticket.id,
+                             "items_id": equipment_id,
+                             "itemtype": "Peripheral"}
+                   }
+        GlpiApiRequest.request(headers=self.headers, url=url, payload=payload, request_type='post')
 
     def create_project(self):
         if self.project.id is None:
             if self.project.content == '':
                 self.project.content = self.project.name
 
-            msg_dict = {"input": {"name": self.project.name,
-                                  "content": self.project.content,
-                                  "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                  "users_id": self.user.id,
-                                  "priority": 3,
-                                  "projectstates_id": 0
-                                  }
-                        }
-
-            payload = json.dumps(msg_dict).encode('utf-8')
+            payload = {"input": {"name": self.project.name,
+                                 "content": self.project.content,
+                                 "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                 "users_id": self.user.id,
+                                 "priority": 3,
+                                 "projectstates_id": 0
+                                 }
+                       }
             url = self.url+"/Project"
-            response = requests.post(url, headers=self.headers, data=payload)
-            logger.info(f'{self.url}/Project status_code={response.status_code}')
+            response = GlpiApiRequest.request(headers=self.headers, url=url, payload=payload, request_type='post')
 
-            if response:
-                logger.info(f'{url} status_code={response.status_code}')
-                if response.status_code >= 400:
-                    logger.warning(f'{url} error = {response.text}')
+            if response.status_code >= 400:
+                return None
 
-            if response.status_code == 201:
-                self.project.id = json.loads(response.text).get('id')
+            self.project.id = response.json().get('id')
 
         if self.project.id:
-            msg_dict = {"input": {"projects_id": self.project.id,
-                                  "itemtype": "User",
-                                  "items_id": Config.PROJECT_MANAGER_ID
-                                  }
-                        }
+            payload = {"input": {"projects_id": self.project.id,
+                                 "itemtype": "User",
+                                 "items_id": Config.PROJECT_MANAGER_ID
+                                 }
+                       }
 
-            payload = json.dumps(msg_dict).encode('utf-8')
             url = f"{self.url}/Project/{self.project.id}/ProjectTeam"
-            response = requests.post(url, headers=self.headers, data=payload)
-
-            if response:
-                logger.info(f'{url} status_code={response.status_code}')
-                if response.status_code >= 400:
-                    logger.warning(f'{url} error = {response.text}')
+            GlpiApiRequest.request(headers=self.headers, url=url, payload=payload, request_type='post')
 
         return self.project.id
 
@@ -190,45 +198,57 @@ class GLPI:
             return self.project.id, "Project"
 
     def upload_doc(self, file_path, filename, doc_name):
-        doc_id = None
+        document_id = None
         headers = {'Session-Token': self.session}
         files = {'uploadManifest': (None, '{"input": {"name": "' + doc_name +
                                     ' (tb)", "_filename": ["' + filename + '"]}}', 'application/json'),
                  'filename[0]': (filename, open(file_path + '/' + filename, "rb")), }
 
-        url = self.url+"/Document"
-        response = requests.post(url, headers=headers, files=files)
-        if response:
-            logger.info(f'{url} status_code={response.status_code}')
-            if response.status_code >= 400:
-                logger.warning(f'{url} error = {response.text}')
+        response = requests.post(self.url+"/Document", headers=headers, files=files)
 
         if response.status_code in range(200, 300):
-            doc_id = response.json().get('id')
+            document_id = response.json().get('id')
 
-        # Link doc with Project
-        if doc_id is not None:
-            item_id = self._get_id_and_type()[0]
-            item_type = self._get_id_and_type()[1]
+        return document_id
 
-            msg_dict = {"input": {"documents_id": doc_id,
-                                  "items_id": item_id,
-                                  "itemtype": item_type,
-                                  "users_id": self.user.id,
-                                  "is_recursive": 1,
-                                  }
-                        }
-            payload = json.dumps(msg_dict).encode('utf-8')
-            url = f"{self.url}/Document/{doc_id}/Document_Item"
-            response = requests.post(url, headers=self.headers, data=payload)
+    def link_loaded_doc_to_item(self, document_id):
+        item_id = self._get_id_and_type()[0]
+        item_type = self._get_id_and_type()[1]
 
-            if response:
-                logger.info(f'{url} status_code={response.status_code}')
-                if response.status_code >= 400:
-                    logger.warning(f'{url} error = {response.text}')
+        payload = {"input": {"documents_id": document_id,
+                             "items_id": item_id,
+                             "itemtype": item_type,
+                             "users_id": self.user.id,
+                             "is_recursive": 1,
+                             }
+                   }
+        url = f"{self.url}/Document/{document_id}/Document_Item"
+        response = GlpiApiRequest.request(url=url, headers=self.headers, payload=payload, request_type='post')
+        return response.status_code
 
 
-def api_request(headers: dict, url: str, payload, request_type: str):
+class GlpiApiRequest:
+    @classmethod
+    def request(cls, headers: dict, url: str, payload: dict | None, request_type: str):
+
+        response = None
+
+        if request_type == 'post':
+            response = requests.post(url, headers=headers, json=payload)
+        if request_type == 'put':
+            response = requests.put(url, headers=headers, json=payload)
+        if request_type == 'get':
+            response = requests.get(url, headers=headers, json=payload)
+
+        # if response is not None:
+        logger.info(f'{url} status_code={response.status_code}')
+        if response.status_code >= 400:
+            logger.warning(f'api_request {url} error = {response.text}')
+
+        return response
+
+
+def api_request(headers: dict, url: str, payload: dict, request_type: str):
     data = json.dumps(payload).encode('utf-8')
 
     response = None
@@ -238,10 +258,10 @@ def api_request(headers: dict, url: str, payload, request_type: str):
     if request_type == 'put':
         response = requests.put(url, headers=headers, data=data)
 
-    if response:
-        logger.info(f'{url} status_code={response.status_code}')
-        if response.status_code >= 400:
-            logger.warning(f'api_request {url} error = {response.text}')
+    # if response:
+    logger.info(f'{url} status_code={response.status_code}')
+    if response.status_code >= 400:
+        logger.warning(f'api_request {url} error = {response.text}')
 
     return response
 
@@ -312,10 +332,10 @@ def refuse_ticket(chat_id, ticket_id, msg_reason):
     url = f'{Config.URL_GLPI}/Ticket/{ticket_id}/ITILSolution'
     response = requests.get(url, headers=headers)
 
-    if response:
-        logger.info(f'{url} status_code={response.status_code}')
-        if response.status_code >= 400:
-            logger.warning(f'api_request {url} error = {response.text}')
+    # if response:
+    logger.info(f'{url} status_code={response.status_code}')
+    if response.status_code >= 400:
+        logger.warning(f'api_request {url} error = {response.text}')
 
     if response.status_code == 200:
         solution_id = json.loads(response.content)[-1]['id']
@@ -364,10 +384,10 @@ def check_ticket_status(chat_id, ticket_id):
     url = f'{Config.URL_GLPI}/Ticket/{ticket_id}'
     response = requests.get(url, headers=headers)
 
-    if response:
-        logger.info(f'{url} status_code={response.status_code}')
-        if response.status_code >= 400:
-            logger.warning(f'api_request {url} error = {response.text}')
+    # if response:
+    logger.info(f'{url} status_code={response.status_code}')
+    if response.status_code >= 400:
+        logger.warning(f'api_request {url} error = {response.text}')
 
     if response.status_code == 200:
         return json.loads(response.content)['status']
@@ -395,15 +415,23 @@ def get_user_projects(chat_id):
     url = f'{Config.URL_GLPI}/User/{user_id}/Project'
     response = requests.get(url, headers=headers)
 
-    if response:
-        logger.info(f'{url} status_code={response.status_code}')
-        if response.status_code >= 400:
-            logger.warning(f'{url} error = {response.text}')
-            return
-        projects = response.content
-        return json.loads(projects)
-    return []
+    # if response:
+    logger.info(f'{url} status_code={response.status_code}')
+    if response.status_code >= 400:
+        logger.warning(f'{url} error = {response.text}')
+        return []
+    projects = response.content
+    return json.loads(projects)
+    # return []
 
 
 if __name__ == '__main__':
     print('glpiapi module')
+
+    # equipment_name = 'P-1.038'
+    # user_creds = get_user_credentials('+7 (111) 111-11-11')
+    # user = User(user_id=user_creds.get('id'),
+    #             token=user_creds.get('user_token'),
+    #             locations_name=user_creds.get('locations_name'))
+    # glpi = GLPI(url='https://engineering.acticomp.ru/apirest.php', user_obj=user)
+    # location_id = glpi._get_equipment_id(equipment_name)

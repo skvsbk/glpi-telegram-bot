@@ -1,4 +1,5 @@
 from app.utils import glpi_dict, ticket_dict
+from .stop import stop_bot
 from .utilities import delete_inline_keyboard, select_action
 from app.config import Config
 from app import bot
@@ -47,11 +48,10 @@ async def btn_send_ticket(chat_id):
     for filename in ticket_dict[chat_id].attachment:
         # print(filename)
         doc_name = F"Документ звявки {ticket_id}"
-        glpi_dict[chat_id].upload_doc(Config.FILE_PATH, filename, doc_name)
-        # doc_id = glpi_dict[chat_id].upload_doc(Config.FILE_PATH, filename, doc_name)
-        # if doc_id is not None:
-        #     # update table glpi_documents_items
-        #     glpidb.update_doc_item(doc_id, ticket_id, user_dict[chat_id].id, 'Ticket')
+        doc_id = glpi_dict[chat_id].upload_doc(Config.FILE_PATH, filename, doc_name)
+        if doc_id is not None:
+            glpi_dict[chat_id].link_loaded_doc_to_item(doc_id)
+
     if ticket_id is not None:
         await bot.send_message(chat_id=chat_id,
                                text="Заявка №" + str(ticket_id) + " успешно оформлена",
@@ -60,16 +60,15 @@ async def btn_send_ticket(chat_id):
         await bot.send_message(chat_id=chat_id,
                                text=Config.MSG_ERROR_SEND_TICKET,
                                reply_markup=None)
+    await stop_bot(chat_id)
 
 
-async def cancel_or_exit_ticket(chat_id, message_id):
-    if ticket_dict[chat_id].name == '':
-        await bot.delete_message(chat_id=chat_id, message_id=message_id)
-    else:
-        await delete_inline_keyboard(chat_id)
-        await bot.send_message(chat_id=chat_id,
-                               text=Config.MSG_CANCEL,
-                               reply_markup=None)
+async def cancel_or_exit_ticket(chat_id):
+    await delete_inline_keyboard(chat_id)
+    await bot.send_message(chat_id=chat_id,
+                           text=Config.MSG_CANCEL,
+                           reply_markup=None)
+    await stop_bot(chat_id)
 
 
 async def btn_category(chat_id, btn_name):

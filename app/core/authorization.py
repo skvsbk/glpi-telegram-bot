@@ -32,14 +32,14 @@ async def authorization(message: types.Message):
                                           token=user_credentials['user_token'],
                                           locations_name=user_credentials['locations_name'])
         # Get user session
-        glpi_dict[chat_id] = glpiapi.GLPI(url=Config.URL_GLPI, user=user_dict[chat_id])
+        glpi_dict[chat_id] = glpiapi.GLPI(url=Config.URL_GLPI, user_obj=user_dict[chat_id])
         if glpi_dict[chat_id].session is None:
             await bot.send_message(chat_id=chat_id,
                                    text=Config.MSG_AUTH_ERROR,
                                    reply_markup=None)
             logger.warning('authorization(message) error for id %s and phone %s - empty user.session',
                            str(chat_id), phone_for_send)
-            await stop_bot(message)
+            await stop_bot(chat_id)
             return
 
         # Create empty ticket
@@ -67,4 +67,4 @@ async def authorization(message: types.Message):
                                reply_markup=None)
         logger.warning('read_contact_phone(message) Authorisation Error for id %s and phone %s',
                        str(chat_id), phone_for_send)
-        await stop_bot(message)
+        await stop_bot(chat_id)

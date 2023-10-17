@@ -115,7 +115,7 @@ class Config:
                           "Обратитесь в IT-отдел."
     MSG_ERROR_SEND_TICKET = "Заявка не создана. Обратитесь в ИТ-отдел."
     MSG_ERROR_SEND_KAIDZEN = "Kaidzen не создан. Обратитесь в ИТ-отдел."
-    MSG_CANCEL = "Заявка отменена."
+    MSG_CANCEL = "Отменено."
     MSG_MY_TICKETS = "Мои завяки"
     MSG_PROJECT_DESCRIPTION = "Введите описание улучшения:"
 
@@ -128,7 +128,7 @@ class Config:
                     "btn_category_6": ("Термостат", 15),
                     "btn_category_7": ("АХО", 13),
                     "btn_category_8": ("Проверка", 4),
-                    "btn_categ_help": ("Помощь", 0),
+                    "btn_category_help": ("Помощь", 0),
                     }
 
     KBD_URGENCY = {"btn_urgency_1": ("Обычная", 3),
@@ -144,7 +144,7 @@ class Config:
                  "btn_theme_equipment": BTN_THEME_EQIPMENT,
                  "btn_action_exit": "Выход"}
 
-    KBD_ADD_SEND_CANCEL_TICKET = {"btn_add_ticket": "Дополнить",
+    KBD_ADD_SEND_CANCEL_TICKET = {"btn_append_ticket": "Дополнить",
                                   "btn_send_ticket": "Отправить в ОГИ",
                                   "btn_cancel_ticket": "Отменить"}
 
@@ -155,21 +155,21 @@ class Config:
                   "btn_init_status_solved": "Решена"}
 
     KBD_CLOSE_TICKET = {'btn_init_close': "Закрыть заявки",
-                        'btn_tickets_exit': "Назад"}
+                        'btn_backward': "Назад"}
 
     KBD_COMMENT_TICKET = {'btn_init_comment': "Оставить коммент",
-                          'btn_tickets_exit': "Назад"}
+                          'btn_backward': "Назад"}
 
-    KBD_SOLVE_TICKET = {'btn_handler_solve': "Решить заявки",
-                        'btn_tickets_exit': "Назад"}
+    KBD_SOLVE_TICKET = {'btn_executor_solve': "Решить заявки",
+                        'btn_backward': "Назад"}
 
     KBD_APPROVE_REJECT = {'btn_init_approve': "Утвердить",
                           'btn_init_reject': "Отклонить",
-                          'btn_tickets_exit': "Назад"}
+                          'btn_backward': "Назад"}
 
     KBD_KAIDZEN = {'btn_kaidzen_make': "Предложить",
                    'btn_kaidzen_my_offers': "Мой kaidzen",
-                   'btn_tickets_exit': "Назад"}
+                   'btn_backward': "Назад"}
 
     KBD_ADD_SEND_CANCEL_KAIDZEN = {'btn_add_kaidzen': "Дополнить",
                                    'btn_send_kaidzen': "Отправить kaidzen",

@@ -1,5 +1,4 @@
 import os
-from aiogram import types
 from app.config import Config
 from app import bot
 from app.utils import user_dict, glpi_dict, ticket_dict, msg_id_dict, tickets_for_solve_dict, tickets_for_close_dict
@@ -13,8 +12,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel('INFO')
 
 
-async def stop_bot(message: types.Message):
-    chat_id = message.chat.id
+async def stop_bot(chat_id):
     try:
         await delete_inline_keyboard(chat_id)
     except:

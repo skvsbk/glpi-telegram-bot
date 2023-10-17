@@ -117,6 +117,6 @@ async def media(message: types.Message):
                     msg_id_for_delete = msg_id_dict[chat_id].pop()
                     await bot.delete_message(chat_id=chat_id, message_id=msg_id_for_delete)
             finally:
-                await stop_bot(message)
+                await stop_bot(chat_id)
         finally:
             logger.info("the function get_data(message) is done for the id %s", str(chat_id))

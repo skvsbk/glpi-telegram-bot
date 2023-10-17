@@ -39,7 +39,7 @@ async def authorization(message: types.Message):
                                    reply_markup=None)
             logger.warning('authorization(message) error for id %s and phone %s - empty user.session',
                            str(chat_id), phone_for_send)
-            await stop_bot(message)
+            await stop_bot(chat_id)
             return
 
         # Create empty ticket
@@ -67,4 +67,4 @@ async def authorization(message: types.Message):
                                reply_markup=None)
         logger.warning('read_contact_phone(message) Authorisation Error for id %s and phone %s',
                        str(chat_id), phone_for_send)
-        await stop_bot(message)
+        await stop_bot(chat_id)

@@ -1,4 +1,5 @@
 from app.utils import glpi_dict, ticket_dict
+from .stop import stop_bot
 from .utilities import delete_inline_keyboard, select_action
 from app.config import Config
 from app import bot
@@ -59,16 +60,15 @@ async def btn_send_ticket(chat_id):
         await bot.send_message(chat_id=chat_id,
                                text=Config.MSG_ERROR_SEND_TICKET,
                                reply_markup=None)
+    await stop_bot(chat_id)
 
 
-async def cancel_or_exit_ticket(chat_id, message_id):
-    if ticket_dict[chat_id].name == '':
-        await bot.delete_message(chat_id=chat_id, message_id=message_id)
-    else:
-        await delete_inline_keyboard(chat_id)
-        await bot.send_message(chat_id=chat_id,
-                               text=Config.MSG_CANCEL,
-                               reply_markup=None)
+async def cancel_or_exit_ticket(chat_id):
+    await delete_inline_keyboard(chat_id)
+    await bot.send_message(chat_id=chat_id,
+                           text=Config.MSG_CANCEL,
+                           reply_markup=None)
+    await stop_bot(chat_id)
 
 
 async def btn_category(chat_id, btn_name):

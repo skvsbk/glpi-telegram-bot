@@ -1,5 +1,6 @@
 from .serializer import serialize_project
 from app.utils import project_dict, glpi_dict
+from .stop import stop_bot
 from .utilities import delete_inline_keyboard, select_action
 from app.utils import glpiapi
 from app.config import Config
@@ -70,3 +71,4 @@ async def btn_send_kaidzen(chat_id):
         await bot.send_message(chat_id=chat_id,
                                text=Config.MSG_ERROR_SEND_KAIDZEN,
                                reply_markup=None)
+    await stop_bot(chat_id)
